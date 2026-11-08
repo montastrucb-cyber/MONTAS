@@ -5,9 +5,10 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { CheckCircle2, Ruler } from "lucide-react";
 import type { Product } from "@/data/catalog";
 import { eur } from "@/lib/pricing";
-import { ProductVisual } from "./ProductVisual";
+import Image from "next/image";
 
-const colors = ["#A8BBA2", "#F7F7F4", "#1F2A44"];
+// Rendus 3D du t-shirt avec logo (générés par « npm run thumbnails »)
+const HERO = ["/thumbs/hero-0.webp", "/thumbs/hero-1.webp", "/thumbs/hero-2.webp"];
 
 /** Mini démonstration animée du configurateur (couleur, palier de prix). */
 export function HeroDemo({ product }: { product: Product }) {
@@ -21,7 +22,7 @@ export function HeroDemo({ product }: { product: Product }) {
   }, [reduce, product.tiers.length]);
 
   const tier = product.tiers[i];
-  const color = colors[i % colors.length];
+  const shown = i % HERO.length;
   const zone = product.zones.find((z) => z.id === "poitrine") ?? product.zones[0];
 
   return (
@@ -32,16 +33,24 @@ export function HeroDemo({ product }: { product: Product }) {
       <div className="glass absolute inset-[4%] overflow-hidden rounded-[2.25rem]">
         <div aria-hidden="true" className="tech-grid absolute inset-0 opacity-60" />
         <motion.div
-          className="absolute inset-[9%]"
+          className="absolute inset-[4%]"
           animate={reduce ? undefined : { y: [0, -8, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         >
-          <ProductVisual kind="tshirt" color={color} className="h-full w-full transition-[fill] duration-700" showZone={zone.box} label="T-shirt personnalisé avec un logo" />
-          <div className="absolute left-1/2 top-[38%] -translate-x-1/2 text-center" aria-hidden="true">
-            <p className="font-display text-2xl font-bold tracking-[0.18em] text-night/80 sm:text-3xl" style={{ color: color === "#1F2A44" ? "#5EEAD4" : undefined }}>
-              LOGO
-            </p>
-          </div>
+          {HERO.map((src, k) => (
+            <Image
+              key={src}
+              src={src}
+              alt={k === 0 ? "T-shirt personnalisé avec un logo, en 3D" : ""}
+              aria-hidden={k === 0 ? undefined : true}
+              width={720}
+              height={720}
+              priority={k === 0}
+              sizes="(min-width: 1024px) 440px, 80vw"
+              className="absolute inset-0 h-full w-full object-contain transition-opacity duration-700"
+              style={{ opacity: k === shown ? 1 : 0 }}
+            />
+          ))}
         </motion.div>
       </div>
 

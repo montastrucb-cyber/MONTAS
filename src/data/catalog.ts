@@ -37,7 +37,7 @@ export const categories: Category[] = [
   },
 ];
 
-/** Forme du visuel produit (dessin SVG maison, voir ProductVisual). */
+/** Type de modèle 3D du produit (voir src/components/three). */
 export type VisualKind =
   | "tshirt"
   | "sweat"

@@ -3,28 +3,49 @@
 // Visionneuse 3D (Three.js via React Three Fiber).
 // Les produits sont modélisés directement en code (aucun fichier 3D à télécharger) :
 // le marquage est une texture appliquée sur la vraie surface (enroulée autour d'un
-// mug, posée sur un carnet…). Dimensions en unités de 100 mm.
+// mug, posée sur le devant d'un t-shirt…). Dimensions en unités de 100 mm.
 
-import { Suspense, useEffect, useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Suspense, useEffect, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Bounds, ContactShadows, Environment, Lightformer, OrbitControls, RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
-import type { MarkingZone, VisualKind } from "@/data/catalog";
+import type { MarkingZone, View, VisualKind } from "@/data/catalog";
+import { GARMENTS, Garment } from "./garments";
+import { Print, useArtTexture } from "./print";
+
+import type { Arts } from "./print";
+export type { Arts };
 
 type Props = {
   kind: VisualKind;
   color: string;
-  zone: MarkingZone;
-  /** Image du marquage (fond transparent), aux proportions de la zone */
-  art: HTMLCanvasElement | null;
+  zones: MarkingZone[];
+  /** Image du marquage de chaque zone (fond transparent), aux proportions de la zone */
+  arts: Arts;
+  /** Face tournée vers l'utilisateur (le modèle pivote en douceur) */
+  facing?: View;
+  /** Angle de présentation (radians) */
+  yaw?: number;
   autoRotate?: boolean;
+  interactive?: boolean;
+  /** Fond transparent et ombre seule : utilisé pour générer les miniatures */
+  studio?: boolean;
+  /** Appelé quand la première image 3D est affichée */
+  onFirstFrame?: () => void;
   className?: string;
 };
 
-export default function Product3D({ kind, color, zone, art, autoRotate = true, className }: Props) {
+export default function Product3D({ kind, color, zones, arts, facing = "front", yaw = 0, autoRotate = true, interactive = true, studio, onFirstFrame, className }: Props) {
   return (
     <div className={className}>
-      <Canvas dpr={[1, 2]} camera={{ position: [0, 0.6, 6], fov: 32 }} gl={{ antialias: true, preserveDrawingBuffer: true }} shadows={false}>
+      <Canvas
+        dpr={studio ? 1 : [1, 2]}
+        camera={{ position: [0, 0.6, 6], fov: 32 }}
+        gl={{ antialias: true, preserveDrawingBuffer: true, alpha: true }}
+        shadows={false}
+        // Rendu à la demande : rien n'est recalculé tant que rien ne bouge (économie de batterie)
+        frameloop={autoRotate && interactive && !studio ? "always" : "demand"}
+      >
         <ambientLight intensity={0.55} />
         <directionalLight position={[3, 5, 4]} intensity={1.6} />
         <directionalLight position={[-4, 2, -3]} intensity={0.5} color="#a5b4fc" />
@@ -35,55 +56,83 @@ export default function Product3D({ kind, color, zone, art, autoRotate = true, c
           <Lightformer form="rect" intensity={1.2} position={[5, 1, 1]} rotation-y={-Math.PI / 2} scale={[4, 2, 1]} color="#5eead4" />
         </Environment>
         <Suspense fallback={null}>
-          <Bounds fit clip observe margin={1.25}>
-            <Model kind={kind} color={color} zone={zone} art={art} />
+          <Bounds fit clip observe margin={studio ? 1.38 : 1.2}>
+            <Turntable facing={facing} yaw={yaw} instant={!!studio}>
+              <Model kind={kind} color={color} zones={zones} arts={arts} />
+            </Turntable>
           </Bounds>
+          {studio && <ReadySignal />}
+          {onFirstFrame && <FirstFrame onFirstFrame={onFirstFrame} />}
         </Suspense>
-        <ContactShadows position={[0, -1.25, 0]} opacity={0.35} scale={10} blur={2.4} far={3} />
-        <OrbitControls
-          makeDefault
-          enablePan={false}
-          minDistance={1.5}
-          maxDistance={14}
-          minPolarAngle={Math.PI / 5}
-          maxPolarAngle={Math.PI / 1.8}
-          autoRotate={autoRotate}
-          autoRotateSpeed={1.4}
-        />
+        <ContactShadows position={[0, -1.3, 0]} opacity={0.3} scale={10} blur={2.4} far={3} frames={studio ? 1 : Infinity} />
+        {interactive && (
+          <OrbitControls
+            makeDefault
+            enablePan={false}
+            minDistance={1.5}
+            maxDistance={14}
+            minPolarAngle={Math.PI / 5}
+            maxPolarAngle={Math.PI / 1.8}
+            autoRotate={autoRotate}
+            autoRotateSpeed={1.2}
+          />
+        )}
       </Canvas>
     </div>
   );
 }
 
-/** Texture du marquage, mise à jour quand le dessin change. */
-function useArtTexture(art: HTMLCanvasElement | null, rotate = 0) {
-  const texture = useMemo(() => {
-    if (!art) return null;
-    const t = new THREE.CanvasTexture(art);
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = 8;
-    if (rotate) {
-      t.center.set(0.5, 0.5);
-      t.rotation = rotate;
-    }
-    return t;
-  }, [art, rotate]);
-  useEffect(() => () => texture?.dispose(), [texture]);
-  return texture;
-}
-
-function Print({ texture, children }: { texture: THREE.Texture | null; children: React.ReactNode }) {
-  if (!texture) return null;
+/** Fait pivoter le modèle vers la face demandée (devant / dos). */
+function Turntable({ facing, yaw, instant, children }: { facing: View; yaw: number; instant: boolean; children: React.ReactNode }) {
+  const ref = useRef<THREE.Group>(null);
+  const invalidate = useThree((s) => s.invalidate);
+  const target = yaw + (facing === "back" ? Math.PI : 0);
+  useEffect(() => {
+    if (instant && ref.current) ref.current.rotation.y = target;
+    invalidate();
+  }, [instant, target, invalidate]);
+  useFrame((_, dt) => {
+    const g = ref.current;
+    if (!g || instant) return;
+    g.rotation.y = THREE.MathUtils.damp(g.rotation.y, target, 6, Math.min(dt, 0.05));
+    // Tant que la rotation n'est pas terminée, on demande l'image suivante
+    if (Math.abs(g.rotation.y - target) > 0.001) invalidate();
+  });
   return (
-    <mesh renderOrder={2}>
+    <group ref={ref} rotation-y={instant ? target : undefined}>
       {children}
-      <meshStandardMaterial map={texture} transparent alphaTest={0.02} roughness={0.55} polygonOffset polygonOffsetFactor={-2} side={THREE.FrontSide} />
-    </mesh>
+    </group>
   );
 }
 
-function Model({ kind, color, zone, art }: { kind: VisualKind; color: string; zone: MarkingZone; art: HTMLCanvasElement | null }) {
-  const tex = useArtTexture(art, kind === "stylo" ? -Math.PI / 2 : 0);
+/** Signale la première image affichée (pour retirer l'image d'attente). */
+function FirstFrame({ onFirstFrame }: { onFirstFrame: () => void }) {
+  const n = useRef(0);
+  const invalidate = useThree((s) => s.invalidate);
+  useFrame(() => {
+    n.current += 1;
+    if (n.current < 4) invalidate();
+    if (n.current === 3) onFirstFrame();
+  });
+  return null;
+}
+
+/** Prévient la page (génération des miniatures) quand le rendu est prêt. */
+function ReadySignal() {
+  const frames = useRef(0);
+  const invalidate = useThree((s) => s.invalidate);
+  useFrame(() => {
+    if (frames.current < 30) invalidate();
+    // ~30 images : le cadrage automatique (Bounds) a fini de s'animer
+    if (++frames.current === 30) (window as unknown as { __ready3d?: boolean }).__ready3d = true;
+  });
+  return null;
+}
+
+function Model({ kind, color, zones, arts }: { kind: VisualKind; color: string; zones: MarkingZone[]; arts: Arts }) {
+  const zone = zones[0];
+  const tex = useArtTexture(arts[zone.id], kind === "stylo" ? -Math.PI / 2 : 0);
+  if (GARMENTS.includes(kind)) return <Garment kind={kind} color={color} zones={zones} arts={arts} />;
   const w = zone.widthMm / 100;
   const h = zone.heightMm / 100;
   const body = <meshStandardMaterial color={color} roughness={0.38} metalness={0.05} />;
@@ -227,7 +276,7 @@ function Model({ kind, color, zone, art }: { kind: VisualKind; color: string; zo
           </RoundedBox>
           <mesh position={[0, 0.34, 0]}>
             <boxGeometry args={[0.12, 0.14, 0.045]} />
-            <meshStandardMaterial color="#d7dadf" roughness={0.2} metalness={0.95} />
+            <meshStandardMaterial color="#cfd3d8" roughness={0.4} metalness={0.55} />
           </mesh>
           <group position={[0, -0.03, 0.0405]}>
             <Print texture={tex}>

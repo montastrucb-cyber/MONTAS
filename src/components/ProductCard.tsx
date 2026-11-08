@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Product } from "@/data/catalog";
 import { eur, fromPrice } from "@/lib/pricing";
-import { ProductVisual } from "./ProductVisual";
+import { ProductThumb } from "./ProductThumb";
 
 export function ProductCard({ product }: { product: Product }) {
   return (
@@ -9,13 +9,8 @@ export function ProductCard({ product }: { product: Product }) {
       href={`/produits/${product.slug}`}
       className="group flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_24px_50px_-28px_rgba(15,118,110,0.45)]"
     >
-      <div className="relative aspect-square bg-muted">
-        <ProductVisual
-          kind={product.kind}
-          color={product.colors[0].hex}
-          label={`${product.name}, coloris ${product.colors[0].name}`}
-          className="h-full w-full p-6 transition duration-500 group-hover:scale-[1.03]"
-        />
+      <div className="relative aspect-square bg-[radial-gradient(circle_at_50%_40%,#ffffff_0%,#edf1f5_72%)]">
+        <ProductThumb product={product} className="p-3 transition duration-500 group-hover:scale-[1.04]" />
         {product.includes && (
           <span className="absolute left-4 top-4 rounded-full bg-night px-2.5 py-1 font-mono text-xs text-glow">Pack</span>
         )}

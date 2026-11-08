@@ -18,11 +18,32 @@ Cette version est l'**étape « design du site »**. Toutes les pages sont en pl
 
 Design : palette bleu nuit, ardoise et sarcelle ; base claire + sections sombres « tech » (grille lumineuse, effets de verre), polices Space Grotesk et DM Sans, animations avec **Motion** (ex-Framer Motion), qui respectent le réglage « réduire les animations » de l'appareil. Direction choisie avec le module **UI/UX Pro Max** (`.claude/skills/ui-ux-pro-max`).
 
-## Aperçu 3D et personnalisation avancée
+## Tout en 3D
 
-- **3D en temps réel** (Three.js / React Three Fiber, gratuit) pour : mug, tasse isotherme, gourde, carnet, stylo, tapis de souris, clé USB, batterie externe, tote bag, sac à dos et packs. Les produits sont modélisés dans le code (`src/components/three/Product3D.tsx`), sans fichier 3D à télécharger ; le marquage est appliqué sur la vraie surface (enroulé autour du mug, le long du stylo…).
-- Le textile (t-shirt, sweat, casquette) reste en 2D : pour le passer en 3D, il faudra des modèles 3D professionnels (fichiers `.glb`), à acheter ou faire réaliser.
-- Configurateur : rotation (crantée tous les 45°), aimantation au centre avec guides, premier plan / arrière-plan, dupliquer, ajuster à la zone, police, gras, italique, taille, espacement des lettres, couleur et contour du texte.
+- **Tous les produits sont modélisés en 3D** dans le code (`src/components/three/`), textile compris : t-shirt, sweat à capuche, casquette, tour de cou, mug, tasse, gourde, carnet, stylo, tapis de souris, clé USB, batterie, tote bag, sac à dos et coffrets.
+- **Configurateur** : la vue principale est le modèle 3D en temps réel. À côté, l'éditeur de la **zone d'impression** (à plat, aux proportions réelles) sert à placer logos et textes ; chaque modification s'affiche aussitôt sur le modèle, qui se retourne tout seul quand on choisit une zone au dos.
+- **Fiches produit** : 3D interactive (tourner, zoomer) avec un logo d'exemple sur les zones choisies.
+- **Miniatures** (accueil, catalogue, kits, panier) : rendus 3D pré-calculés en WebP (`public/thumbs/`, ~180 Ko au total), pour garder des pages rapides.
+- Pour économiser la batterie et rester rapide, la 3D interactive démarre au premier geste du visiteur (souris, toucher, défilement) ; en attendant, son rendu en image est affiché.
+- Outils d'édition : rotation crantée, aimantation au centre, calques, duplication, ajustement, police, gras, italique, taille, espacement, couleur et contour du texte.
+
+### Régénérer les miniatures 3D (après un ajout de produit ou de coloris)
+
+```bash
+ENABLE_STUDIO=1 npm run build
+```
+
+```bash
+ENABLE_STUDIO=1 npx next start -p 3100
+```
+
+Puis, dans un autre terminal :
+
+```bash
+npm run thumbnails
+```
+
+Il faut Playwright (`npm i -D playwright && npx playwright install chromium`). Refaites ensuite un `npm run build` normal : la page technique `/studio` n'existe pas en production.
 
 ## Gammes
 
@@ -42,7 +63,7 @@ Bureau et entreprise · Kits de bienvenue salariés · Clubs et associations · 
 | 8 | Favicon | `src/app/icon.svg` + `apple-icon.tsx` | ✅ |
 | 9 | Sitemap + robots.txt | `/sitemap.xml`, `/robots.txt` ; **indexation bloquée tant que `NEXT_PUBLIC_SITE_URL` n'est pas réglée** | ✅ |
 | 10 | Textes des images | chaque visuel produit a un texte alternatif, les décors sont ignorés par les lecteurs d'écran | ✅ |
-| 11 | Images compressées | aucune photo lourde pour l'instant (visuels en SVG) ; `next/image` configuré en AVIF/WebP pour les futures photos | ✅ |
+| 11 | Images compressées | miniatures 3D en WebP (~9 Ko chacune) servies en AVIF/WebP par `next/image` | ✅ |
 | 12 | Vitesse | Lighthouse mobile : Performance 93–96, CLS 0 | ✅ |
 | 13 | Contraste | axe-core (WCAG 2.1 AA) : 0 défaut sur 13 pages | ✅ |
 | 14 | Responsive | 375, 768, 1024 et 1440 px : aucun débordement horizontal | ✅ |

@@ -6,7 +6,7 @@ import { getProduct } from "@/data/catalog";
 import { useCart } from "@/lib/cart";
 import { computeQuote, eur, round } from "@/lib/pricing";
 import { site } from "@/config/site";
-import { ProductVisual } from "@/components/ProductVisual";
+import { ProductThumb } from "@/components/ProductThumb";
 import { ButtonLink, Container, DemoNotice } from "@/components/ui";
 
 export default function PanierPage() {
@@ -43,7 +43,7 @@ export default function PanierPage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={line.previewDataUrl} alt="Aperçu de votre personnalisation" className="h-full w-full object-cover" />
                   ) : (
-                    <ProductVisual kind={product.kind} color={product.colors.find((c) => c.name === line.color)?.hex ?? product.colors[0].hex} className="h-full w-full p-2" />
+                    <ProductThumb product={product} sizes="112px" className="p-1" />
                   )}
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">

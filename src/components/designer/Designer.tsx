@@ -11,14 +11,13 @@ import {
   ArrowDownToLine,
   ArrowUpToLine,
   Bold,
-  Box,
+  Move3d,
   CheckCircle2,
   Copy,
   Crosshair,
   ImagePlus,
   Italic,
   Maximize2,
-  PenTool,
   RotateCcw,
   RotateCw,
   Save,
@@ -26,12 +25,13 @@ import {
   Type,
 } from "lucide-react";
 import { products, type MarkingZone, type Product, type View } from "@/data/catalog";
-import { ProductVisual, isDark } from "@/components/ProductVisual";
+import { isDark } from "@/lib/color";
 import { QtyStepper, QuoteBreakdown, TierTable } from "@/components/PriceSummary";
 import { computeQuote } from "@/lib/pricing";
 import { useCart } from "@/lib/cart";
 import { Viewer3D } from "@/components/three/Viewer3D";
-import { supports3D } from "@/components/three/support";
+import type { Arts } from "@/components/three/print";
+import { renderZoneArt } from "@/lib/zoneArt";
 import {
   ACCEPTED_TYPES,
   MAX_FILE_BYTES,
@@ -44,7 +44,7 @@ import {
   type DesignElement,
 } from "@/lib/design";
 
-const BASE = 400; // repère du visuel
+const EDITOR_MAX_H = 340; // hauteur maximale de l'éditeur de zone (px)
 const FONTS = [
   { label: "Sans", value: "Arial, Helvetica, sans-serif" },
   { label: "Arrondie", value: "'Trebuchet MS', Verdana, sans-serif" },
@@ -102,22 +102,25 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
   const [qty, setQty] = useState(product.moq);
   const [techniqueId, setTechniqueId] = useState(product.techniques[0].id);
   const [textDraft, setTextDraft] = useState("");
-  const [mode, setMode] = useState<"2d" | "3d">("2d");
   const [guides, setGuides] = useState<Guides | null>(null);
-  const [art3d, setArt3d] = useState<HTMLCanvasElement | null>(null);
+  const [arts, setArts] = useState<Arts>({});
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const trRef = useRef<Konva.Transformer>(null);
-  const svgWrapRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [size, setSize] = useState(400);
-  const scale = size / BASE;
+  const [editorW, setEditorW] = useState(480);
 
   const zonesForView = product.zones.filter((z) => z.view === view);
   const zone = product.zones.find((z) => z.id === zoneId) ?? zonesForView[0] ?? product.zones[0];
   const zoneById = useCallback((id: string) => product.zones.find((z) => z.id === id)!, [product]);
-  const visible = elements.filter((e) => e.view === view);
+  // L'éditeur n'affiche que la zone de marquage, à plat
+  const scale = Math.min(editorW / zone.box.w, EDITOR_MAX_H / zone.box.h);
+  const stageW = Math.round(zone.box.w * scale);
+  const stageH = Math.round(zone.box.h * scale);
+  const origin = { x: -zone.box.x * scale, y: -zone.box.y * scale };
+  const visible = elements.filter((e) => e.zoneId === zone.id);
   const selected = elements.find((e) => e.id === selectedId) ?? null;
   const views = Array.from(new Set(product.zones.map((z) => z.view)));
 
@@ -125,7 +128,7 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => setSize(Math.round(entry.contentRect.width)));
+    const ro = new ResizeObserver(([entry]) => setEditorW(Math.round(entry.contentRect.width)));
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
@@ -136,9 +139,22 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
     const stage = stageRef.current;
     if (!tr || !stage) return;
     const node = selectedId ? stage.findOne(`#${selectedId}`) : null;
-    tr.nodes(node && selected?.view === view ? [node] : []);
+    tr.nodes(node && selected?.zoneId === zone.id ? [node] : []);
     tr.getLayer()?.batchDraw();
-  }, [selectedId, selected?.view, view, elements]);
+  }, [selectedId, selected?.zoneId, zone.id, elements]);
+
+  // Texture 3D de chaque zone, recalculée à chaque modification du design
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(
+      product.zones.map(async (z) => [z.id, await renderZoneArt(elements.filter((e) => e.zoneId === z.id), z)] as const),
+    ).then((entries) => {
+      if (!cancelled) setArts(Object.fromEntries(entries));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [elements, product]);
 
   function changeProduct(slug: string) {
     const p = customizable.find((x) => x.slug === slug)!;
@@ -152,7 +168,6 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
     setQty(p.moq);
     setTechniqueId(p.techniques[0].id);
     setError(null);
-    if (!supports3D(p.kind)) setMode("2d");
   }
 
   function changeView(v: View) {
@@ -281,29 +296,7 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
     });
   }
 
-  // ——— Aperçu 3D ———
-  const can3D = supports3D(product.kind);
-  const zone3D = product.zones[0];
 
-  function enter3D() {
-    setSelectedId(null);
-    if (zone3D.view !== view) changeView(zone3D.view);
-    setMode("3d");
-  }
-
-  // Après chaque modification, on « photographie » la zone de marquage pour la 3D
-  useEffect(() => {
-    if (mode !== "3d") return;
-    const raf = requestAnimationFrame(() => {
-      const stage = stageRef.current;
-      if (!stage) return;
-      trRef.current?.nodes([]);
-      const b = zone3D.box;
-      const pixelRatio = Math.min(4, 1024 / (b.w * scale));
-      setArt3d(stage.toCanvas({ x: b.x * scale, y: b.y * scale, width: b.w * scale, height: b.h * scale, pixelRatio }));
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [mode, elements, scale, zone3D, view]);
 
   function reset() {
     setElements([]);
@@ -317,26 +310,19 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
     setTimeout(() => setFlash(null), 3500);
   }
 
-  /** Aperçu basse définition (produit + design) — PAS un fichier de production */
+  /** Aperçu basse définition (capture de la vue 3D) — PAS un fichier de production */
   async function makePreview(): Promise<string | undefined> {
-    const stage = stageRef.current;
-    const svg = svgWrapRef.current?.querySelector("svg");
-    if (!stage || !svg) return;
-    trRef.current?.nodes([]);
-    const clone = svg.cloneNode(true) as SVGSVGElement;
-    clone.querySelectorAll("[data-zone]").forEach((n) => n.remove());
-    clone.setAttribute("width", "400");
-    clone.setAttribute("height", "400");
-    const svgUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(clone));
-    const canvas = document.createElement("canvas");
-    canvas.width = 400;
-    canvas.height = 400;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#F1F1EC";
+    const gl = viewerRef.current?.querySelector("canvas");
+    if (!gl) return;
+    const c = document.createElement("canvas");
+    c.width = 400;
+    c.height = 400;
+    const ctx = c.getContext("2d")!;
+    ctx.fillStyle = "#EDF1F5";
     ctx.fillRect(0, 0, 400, 400);
-    ctx.drawImage(await loadImage(svgUrl), 0, 0, 400, 400);
-    ctx.drawImage(stage.toCanvas({ pixelRatio: BASE / size }), 0, 0, 400, 400);
-    return canvas.toDataURL("image/jpeg", 0.8);
+    const side = Math.min(gl.width, gl.height);
+    ctx.drawImage(gl, (gl.width - side) / 2, (gl.height - side) / 2, side, side, 0, 0, 400, 400);
+    return c.toDataURL("image/jpeg", 0.82);
   }
 
   const usedZones = new Set(elements.map((e) => e.zoneId)).size;
@@ -353,127 +339,32 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.15fr_1fr]">
-      {/* ——— Canevas ——— */}
+    <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
+      {/* ——— Aperçu 3D ——— */}
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <div ref={wrapRef} className="relative aspect-square w-full overflow-hidden rounded-[2rem] border border-line bg-muted">
-          <div
-            ref={svgWrapRef}
-            role="img"
-            aria-label={`Aperçu de personnalisation : ${product.name}, coloris ${color.name}, ${visible.length} élément(s) placé(s)`}
-            className="pointer-events-none absolute inset-0"
-          >
-            <ProductVisual kind={product.kind} color={color.hex} view={view} className="h-full w-full" showZone={zone.view === view ? zone.box : null} />
-          </div>
-          <Stage
-            ref={stageRef}
-            width={size}
-            height={size}
-            scaleX={scale}
-            scaleY={scale}
+        <div ref={viewerRef} className="relative aspect-square w-full overflow-hidden rounded-[2rem] border border-line bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#edf1f5_70%)]">
+          <Viewer3D
+            kind={product.kind}
+            color={color.hex}
+            zones={product.zones}
+            arts={arts}
+            facing={zone.view}
+            poster={`/thumbs/${product.slug}.webp`}
+            posterPriority
+            yaw={zone.view === "front" ? -0.25 : 0.25}
+            autoRotate={false}
+            label={`Aperçu 3D : ${product.name}, coloris ${color.name}, ${elements.length} élément(s) de marquage`}
             className="absolute inset-0"
-            onMouseDown={(e) => e.target === e.target.getStage() && setSelectedId(null)}
-            onTouchStart={(e) => e.target === e.target.getStage() && setSelectedId(null)}
-          >
-            <Layer>
-              {visible.map((el) => (
-                <ElementNode
-                  key={el.id}
-                  el={el}
-                  zone={zoneById(el.zoneId)}
-                  scale={scale}
-                  onSelect={() => {
-                    setSelectedId(el.id);
-                    setZoneId(el.zoneId);
-                  }}
-                  onChange={(patch) => update(el.id, patch)}
-                  onGuides={setGuides}
-                />
-              ))}
-              {guides?.v && zone.view === view && (
-                <Line points={[zone.box.x + zone.box.w / 2, zone.box.y, zone.box.x + zone.box.w / 2, zone.box.y + zone.box.h]} stroke="#0EA5E9" strokeWidth={1 / scale} dash={[4, 3]} listening={false} />
-              )}
-              {guides?.h && zone.view === view && (
-                <Line points={[zone.box.x, zone.box.y + zone.box.h / 2, zone.box.x + zone.box.w, zone.box.y + zone.box.h / 2]} stroke="#0EA5E9" strokeWidth={1 / scale} dash={[4, 3]} listening={false} />
-              )}
-              <Transformer
-                ref={trRef}
-                rotateEnabled
-                rotationSnaps={[0, 45, 90, 135, 180, -45, -90, -135]}
-                rotationSnapTolerance={6}
-                rotateAnchorOffset={22}
-                keepRatio
-                enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]}
-                anchorSize={10}
-                anchorCornerRadius={5}
-                borderStroke="#0F766E"
-                anchorStroke="#0F766E"
-                boundBoxFunc={(oldBox, newBox) => {
-                  if (!selected) return newBox;
-                  const z = zoneById(selected.zoneId).box;
-                  if (newBox.width < 8 || newBox.height < 8) return oldBox;
-                  // Les 4 coins de la boîte (éventuellement tournée) doivent rester dans la zone
-                  const c = Math.cos(newBox.rotation);
-                  const s = Math.sin(newBox.rotation);
-                  const corners = [
-                    [0, 0],
-                    [newBox.width, 0],
-                    [0, newBox.height],
-                    [newBox.width, newBox.height],
-                  ].map(([dx, dy]) => [newBox.x + dx * c - dy * s, newBox.y + dx * s + dy * c]);
-                  const inside = corners.every(
-                    ([x, y]) => x >= z.x * scale - 1 && y >= z.y * scale - 1 && x <= (z.x + z.w) * scale + 1 && y <= (z.y + z.h) * scale + 1,
-                  );
-                  return inside ? newBox : oldBox;
-                }}
-              />
-            </Layer>
-          </Stage>
-          {elements.length === 0 && mode === "2d" && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-16 text-center text-sm text-ink-faint">
-              Importez un logo ou ajoutez un texte pour commencer
-            </div>
-          )}
-          {mode === "3d" && (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#edf1f5_70%)]">
-              <Viewer3D
-                kind={product.kind}
-                color={color.hex}
-                zone={zone3D}
-                art={art3d}
-                label={`Aperçu 3D : ${product.name}, coloris ${color.name}, avec votre marquage`}
-                className="absolute inset-0"
-              />
-              <p className="pointer-events-none absolute inset-x-0 bottom-16 text-center text-xs text-ink-faint">
-                Faites glisser pour tourner · molette ou pincement pour zoomer
-              </p>
-            </div>
-          )}
-          {can3D && (
-            <div className="absolute right-3 top-3 flex rounded-full border border-line bg-surface p-1 text-sm shadow-sm" role="group" aria-label="Mode d'affichage">
-              <button
-                onClick={() => setMode("2d")}
-                aria-pressed={mode === "2d"}
-                className={clsx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 transition", mode === "2d" ? "bg-ink text-white" : "text-ink-soft")}
-              >
-                <PenTool size={14} aria-hidden="true" /> Édition 2D
-              </button>
-              <button
-                onClick={enter3D}
-                aria-pressed={mode === "3d"}
-                className={clsx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 transition", mode === "3d" ? "bg-ink text-white" : "text-ink-soft")}
-              >
-                <Box size={14} aria-hidden="true" /> Aperçu 3D
-              </button>
-            </div>
-          )}
-          {views.length > 1 && mode === "2d" && (
-            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 rounded-full border border-line bg-surface p-1 text-sm shadow-sm">
+          />
+          <span className="pointer-events-none absolute left-4 top-4 rounded-full bg-night px-3 py-1 font-mono text-xs text-glow">3D · temps réel</span>
+          {views.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 rounded-full border border-line bg-surface p-1 text-sm shadow-sm" role="group" aria-label="Face affichée">
               {views.map((v) => (
                 <button
                   key={v}
                   onClick={() => changeView(v)}
-                  className={clsx("rounded-full px-4 py-1.5 transition", view === v ? "bg-ink text-white" : "text-ink-soft")}
+                  aria-pressed={view === v}
+                  className={clsx("min-h-9 rounded-full px-4 transition", view === v ? "bg-ink text-white" : "text-ink-soft")}
                 >
                   {v === "front" ? "Devant" : "Dos"}
                 </button>
@@ -482,15 +373,15 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
           )}
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-ink-faint">
-            Aperçu à l&apos;écran. Le fichier d&apos;impression HD sera produit à part, à partir de votre fichier original.
+          <p className="flex items-center gap-1.5 text-xs text-ink-faint">
+            <Move3d size={14} aria-hidden="true" /> Glissez pour tourner, molette ou pincement pour zoomer. Aperçu indicatif.
           </p>
           <div className="flex gap-2">
-            <button onClick={reset} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-sm hover:border-ink/30">
-              <RotateCcw size={14} /> Réinitialiser
+            <button onClick={reset} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-sm hover:border-ink/30">
+              <RotateCcw size={14} aria-hidden="true" /> Réinitialiser
             </button>
-            <button onClick={save} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-sm hover:border-ink/30">
-              <Save size={14} /> Sauvegarder
+            <button onClick={save} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-sm hover:border-ink/30">
+              <Save size={14} aria-hidden="true" /> Sauvegarder
             </button>
           </div>
         </div>
@@ -519,6 +410,7 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
                 onClick={() => setColor(c)}
                 title={c.name}
                 aria-label={c.name}
+                aria-pressed={color.hex === c.hex}
                 className={clsx("h-9 w-9 rounded-full ring-1 ring-black/10 transition", color.hex === c.hex && "ring-2 ring-ink ring-offset-2")}
                 style={{ background: c.hex }}
               />
@@ -527,24 +419,120 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
           </div>
         </Panel>
 
-        <Panel title="2. Zone de marquage">
+        <Panel title="2. Zone d'impression">
           <div className="flex flex-wrap gap-2">
             {product.zones.map((z) => (
               <button
                 key={z.id}
                 onClick={() => {
-                  setZoneId(z.id);
                   if (z.view !== view) changeView(z.view);
                   setZoneId(z.id);
+                  setSelectedId(null);
                 }}
+                aria-pressed={zone.id === z.id}
                 className={clsx(
-                  "rounded-full border px-3.5 py-1.5 text-sm transition",
+                  "min-h-9 rounded-full border px-3.5 text-sm transition",
                   zone.id === z.id ? "border-accent bg-accent-soft text-accent" : "border-line text-ink-soft hover:border-ink/30",
                 )}
               >
                 {z.label} · {z.widthMm / 10}×{z.heightMm / 10} cm
               </button>
             ))}
+          </div>
+          {/* Éditeur à plat de la zone : ce que vous y placez apparaît aussitôt sur le modèle 3D */}
+          <div ref={wrapRef} className="mt-4 w-full">
+            <div
+              className="relative mx-auto overflow-hidden rounded-xl"
+              style={{
+                width: stageW,
+                height: stageH,
+                background: color.hex,
+                boxShadow: "inset 0 0 0 1px rgba(11,18,32,0.12)",
+              }}
+            >
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  backgroundImage: `linear-gradient(${isDark(color.hex) ? "rgba(255,255,255,0.07)" : "rgba(11,18,32,0.06)"} 1px, transparent 1px), linear-gradient(90deg, ${isDark(color.hex) ? "rgba(255,255,255,0.07)" : "rgba(11,18,32,0.06)"} 1px, transparent 1px)`,
+                  backgroundSize: `${stageW / 10}px ${stageW / 10}px`,
+                  outline: `1.5px dashed ${isDark(color.hex) ? "rgba(255,255,255,0.55)" : "rgba(11,18,32,0.4)"}`,
+                  outlineOffset: "-6px",
+                  borderRadius: 12,
+                }}
+              />
+              <Stage
+                ref={stageRef}
+                width={stageW}
+                height={stageH}
+                scaleX={scale}
+                scaleY={scale}
+                x={origin.x}
+                y={origin.y}
+                className="absolute inset-0"
+                onMouseDown={(e) => e.target === e.target.getStage() && setSelectedId(null)}
+                onTouchStart={(e) => e.target === e.target.getStage() && setSelectedId(null)}
+              >
+                <Layer>
+                  {visible.map((el) => (
+                    <ElementNode
+                      key={el.id}
+                      el={el}
+                      zone={zoneById(el.zoneId)}
+                      scale={scale}
+                      origin={origin}
+                      onSelect={() => setSelectedId(el.id)}
+                      onChange={(patch) => update(el.id, patch)}
+                      onGuides={setGuides}
+                    />
+                  ))}
+                  {guides?.v && (
+                    <Line points={[zone.box.x + zone.box.w / 2, zone.box.y, zone.box.x + zone.box.w / 2, zone.box.y + zone.box.h]} stroke="#0EA5E9" strokeWidth={1 / scale} dash={[4 / scale, 3 / scale]} listening={false} />
+                  )}
+                  {guides?.h && (
+                    <Line points={[zone.box.x, zone.box.y + zone.box.h / 2, zone.box.x + zone.box.w, zone.box.y + zone.box.h / 2]} stroke="#0EA5E9" strokeWidth={1 / scale} dash={[4 / scale, 3 / scale]} listening={false} />
+                  )}
+                  <Transformer
+                    ref={trRef}
+                    rotateEnabled
+                    rotationSnaps={[0, 45, 90, 135, 180, -45, -90, -135]}
+                    rotationSnapTolerance={6}
+                    rotateAnchorOffset={18}
+                    keepRatio
+                    enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]}
+                    anchorSize={10}
+                    anchorCornerRadius={5}
+                    borderStroke="#0EA5E9"
+                    anchorStroke="#0EA5E9"
+                    boundBoxFunc={(oldBox, newBox) => {
+                      if (newBox.width < 8 || newBox.height < 8) return oldBox;
+                      // Les 4 coins (boîte éventuellement tournée) restent dans la zone, qui occupe tout l'éditeur
+                      const c = Math.cos(newBox.rotation);
+                      const sn = Math.sin(newBox.rotation);
+                      const inside = [
+                        [0, 0],
+                        [newBox.width, 0],
+                        [0, newBox.height],
+                        [newBox.width, newBox.height],
+                      ].every(([dx, dy]) => {
+                        const x = newBox.x + dx * c - dy * sn;
+                        const y = newBox.y + dx * sn + dy * c;
+                        return x >= -1 && y >= -1 && x <= stageW + 1 && y <= stageH + 1;
+                      });
+                      return inside ? newBox : oldBox;
+                    }}
+                  />
+                </Layer>
+              </Stage>
+              {visible.length === 0 && (
+                <p className={clsx("pointer-events-none absolute inset-0 grid place-items-center px-4 text-center text-xs", isDark(color.hex) ? "text-white/70" : "text-ink-faint")}>
+                  Zone vide : importez un logo ou ajoutez un texte
+                </p>
+              )}
+            </div>
+            <p className="mt-2 text-center text-xs text-ink-faint">
+              Zone {zone.label.toLowerCase()} à plat · {zone.widthMm / 10} × {zone.heightMm / 10} cm réels
+            </p>
           </div>
         </Panel>
 
@@ -896,6 +884,7 @@ function ElementNode({
   el,
   zone,
   scale,
+  origin,
   onSelect,
   onChange,
   onGuides,
@@ -903,6 +892,7 @@ function ElementNode({
   el: DesignElement;
   zone: MarkingZone;
   scale: number;
+  origin: { x: number; y: number };
   onSelect: () => void;
   onChange: (p: Partial<DesignElement>) => void;
   onGuides: (g: Guides | null) => void;
@@ -944,9 +934,9 @@ function ElementNode({
     onTap: onSelect,
     onDragStart: onSelect,
     dragBoundFunc(pos: { x: number; y: number }) {
-      // pos = centre, en pixels écran → repère 400
-      let cx = pos.x / scale;
-      let cy = pos.y / scale;
+      // pos = centre, en pixels de l'éditeur → repère 400
+      let cx = (pos.x - origin.x) / scale;
+      let cy = (pos.y - origin.y) / scale;
       const c = clampToZone({ x: cx - el.width / 2, y: cy - el.height / 2, width: el.width, height: el.height, rotation: el.rotation }, zone);
       cx = c.x + el.width / 2;
       cy = c.y + el.height / 2;
@@ -956,7 +946,7 @@ function ElementNode({
       if (v) cx = zcx;
       if (h) cy = zcy;
       onGuides({ v, h });
-      return { x: cx * scale, y: cy * scale };
+      return { x: cx * scale + origin.x, y: cy * scale + origin.y };
     },
     onDragEnd(e: Konva.KonvaEventObject<DragEvent>) {
       onGuides(null);

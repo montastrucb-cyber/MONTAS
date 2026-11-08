@@ -4,14 +4,13 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { Box, Check, Image as ImageIcon, MousePointer2 } from "lucide-react";
+import { Check, MousePointer2 } from "lucide-react";
 import type { Product, View } from "@/data/catalog";
 import { computeQuote, eur, fromPrice } from "@/lib/pricing";
 import { useCart } from "@/lib/cart";
-import { ProductVisual, isDark } from "./ProductVisual";
+import { isDark } from "@/lib/color";
 import { QtyStepper, QuoteBreakdown, TierTable } from "./PriceSummary";
 import { Viewer3D } from "./three/Viewer3D";
-import { supports3D } from "./three/support";
 import { makeSampleArt } from "./three/sampleArt";
 
 export function ProductConfigurator({ product }: { product: Product }) {
@@ -19,8 +18,6 @@ export function ProductConfigurator({ product }: { product: Product }) {
   const { add } = useCart();
   const [color, setColor] = useState(product.colors[0]);
   const [view, setView] = useState<View>("front");
-  const can3D = supports3D(product.kind);
-  const [show3D, setShow3D] = useState(false);
   const [techniqueId, setTechniqueId] = useState(product.techniques[0]?.id);
   const [zoneIds, setZoneIds] = useState<string[]>([product.zones[0].id]);
   const [sizes, setSizes] = useState<Record<string, number>>(() =>
@@ -50,7 +47,6 @@ export function ProductConfigurator({ product }: { product: Product }) {
   const quote = useMemo(() => computeQuote(product, qty, technique, zoneIds.length), [product, qty, technique, zoneIds.length]);
   const belowMoq = qty < product.moq;
   const views = Array.from(new Set(product.zones.map((z) => z.view)));
-  const shownZones = product.zones.filter((z) => z.view === view && zoneIds.includes(z.id));
 
   const sizeLabel = product.sizes
     ? Object.entries(sizes)
@@ -67,48 +63,17 @@ export function ProductConfigurator({ product }: { product: Product }) {
     <div className="mt-6 grid gap-10 lg:grid-cols-[1.05fr_1fr]">
       {/* Visuel */}
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <div className="relative aspect-square overflow-hidden rounded-[2rem] border border-line bg-muted">
-          {shownZones.map((z) => (
-            <span key={z.id} className="sr-only">Zone {z.label}</span>
-          ))}
-          <ProductVisual
-            kind={product.kind}
-            color={color.hex}
-            view={view}
-            className="h-full w-full p-8"
-            showZone={shownZones[0]?.box}
-            label={`${product.name}, coloris ${color.name}, vue ${view === "front" ? "de face" : "de dos"}`}
-          />
-          {show3D && (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#edf1f5_70%)]">
-              <Sample3D product={product} colorHex={color.hex} colorName={color.name} />
-            </div>
-          )}
-          {can3D && (
-            <div className="absolute right-3 top-3 flex rounded-full border border-line bg-surface p-1 text-sm shadow-sm" role="group" aria-label="Type d'aperçu">
-              <button
-                onClick={() => setShow3D(false)}
-                aria-pressed={!show3D}
-                className={clsx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 transition", !show3D ? "bg-ink text-white" : "text-ink-soft")}
-              >
-                <ImageIcon size={14} aria-hidden="true" /> Illustration
-              </button>
-              <button
-                onClick={() => setShow3D(true)}
-                aria-pressed={show3D}
-                className={clsx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 transition", show3D ? "bg-ink text-white" : "text-ink-soft")}
-              >
-                <Box size={14} aria-hidden="true" /> 3D
-              </button>
-            </div>
-          )}
-          {views.length > 1 && !show3D && (
-            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 rounded-full border border-line bg-surface p-1 text-sm">
+        <div className="relative aspect-square overflow-hidden rounded-[2rem] border border-line bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#edf1f5_70%)]">
+          <Sample3D product={product} colorHex={color.hex} colorName={color.name} zoneIds={zoneIds} facing={view} />
+          <span className="pointer-events-none absolute left-4 top-4 rounded-full bg-night px-3 py-1 font-mono text-xs text-glow">3D · temps réel</span>
+          {views.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 rounded-full border border-line bg-surface p-1 text-sm shadow-sm" role="group" aria-label="Face affichée">
               {views.map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  className={clsx("rounded-full px-4 py-1.5 transition", view === v ? "bg-ink text-white" : "text-ink-soft")}
+                  aria-pressed={view === v}
+                  className={clsx("min-h-9 rounded-full px-4 transition", view === v ? "bg-ink text-white" : "text-ink-soft")}
                 >
                   {v === "front" ? "Devant" : "Dos"}
                 </button>
@@ -117,7 +82,7 @@ export function ProductConfigurator({ product }: { product: Product }) {
           )}
         </div>
         <p className="mt-3 text-center text-xs text-ink-faint">
-          {show3D ? "Aperçu 3D avec un logo d'exemple · faites glisser pour tourner" : "Illustration non contractuelle · pointillés : zone de marquage"}
+          Logo d&apos;exemple sur les zones choisies · glissez pour tourner, molette ou pincement pour zoomer
         </p>
       </div>
 
@@ -262,16 +227,36 @@ function Section({ title, aside, children }: { title: string; aside?: string; ch
   );
 }
 
-function Sample3D({ product, colorHex, colorName }: { product: Product; colorHex: string; colorName: string }) {
+function Sample3D({
+  product,
+  colorHex,
+  colorName,
+  zoneIds,
+  facing,
+}: {
+  product: Product;
+  colorHex: string;
+  colorName: string;
+  zoneIds: string[];
+  facing: View;
+}) {
   const ink = isDark(colorHex) ? "#FFFFFF" : "#0B1220";
-  const slug = product.slug;
-  const art = useMemo(() => (typeof document === "undefined" ? null : makeSampleArt(product.zones[0], ink)), [slug, ink]); // eslint-disable-line react-hooks/exhaustive-deps
+  const key = zoneIds.join(",");
+  const arts = useMemo(() => {
+    if (typeof document === "undefined") return {};
+    return Object.fromEntries(product.zones.filter((z) => key.split(",").includes(z.id)).map((z) => [z.id, makeSampleArt(z, ink)]));
+  }, [product, key, ink]);
   return (
     <Viewer3D
       kind={product.kind}
       color={colorHex}
-      zone={product.zones[0]}
-      art={art}
+      zones={product.zones}
+      arts={arts}
+      facing={facing}
+      yaw={-0.3}
+      poster={`/thumbs/${product.slug}.webp`}
+      posterPriority
+      autoRotate={false}
       label={`${product.name} en 3D, coloris ${colorName}, avec un logo d'exemple`}
       className="absolute inset-0"
     />

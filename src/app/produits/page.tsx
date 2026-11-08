@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function ProduitsPage({ searchParams }: PageProps<"/produits">) {
   return (
-    <Suspense fallback={<Container className="pt-16"><div className="h-96 animate-pulse rounded-3xl bg-muted" /></Container>}>
+    <Suspense fallback={<Container className="min-h-[150vh] pt-16"><div className="h-96 animate-pulse rounded-3xl bg-muted" /></Container>}>
       <Catalogue searchParams={searchParams} />
     </Suspense>
   );

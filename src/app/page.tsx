@@ -13,7 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { categories, getProduct, products } from "@/data/catalog";
-import { ProductVisual } from "@/components/ProductVisual";
+import { ProductThumb } from "@/components/ProductThumb";
 import { ProductCard } from "@/components/ProductCard";
 import { HeroDemo } from "@/components/HeroDemo";
 import { Showcase3D } from "@/components/three/Showcase3D";
@@ -113,9 +113,9 @@ export default function Home() {
                     <p className="font-mono text-xs text-ink-faint">{c.audience}</p>
                     <h3 className="mt-2 text-xl font-semibold tracking-tight">{c.name}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-ink-soft">{c.short}</p>
-                    <div className="relative mt-6 aspect-[4/3] overflow-hidden rounded-2xl bg-muted">
+                    <div className="relative mt-6 aspect-[4/3] overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_50%_40%,#ffffff_0%,#edf1f5_72%)]">
                       <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(94,234,212,0.35),transparent_60%)] opacity-0 transition duration-500 group-hover:opacity-100" />
-                      <ProductVisual kind={p.kind} color={v.color} label={p.name} className="relative h-full w-full p-4 transition duration-500 group-hover:scale-[1.05]" />
+                      <ProductThumb product={p} sizes="(min-width: 1024px) 25vw, 50vw" className="relative p-2 transition duration-500 group-hover:scale-[1.05]" />
                     </div>
                     <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium">
                       Voir les produits <ArrowRight size={15} aria-hidden="true" className="transition group-hover:translate-x-1" />

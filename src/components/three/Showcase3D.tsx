@@ -5,7 +5,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { MousePointer2, Move3d } from "lucide-react";
 import { getProduct } from "@/data/catalog";
-import { isDark } from "@/components/ProductVisual";
+import { isDark } from "@/lib/color";
 import { Viewer3D } from "./Viewer3D";
 import { makeSampleArt } from "./sampleArt";
 
@@ -74,8 +74,9 @@ export function Showcase3D() {
           key={product.slug}
           kind={product.kind}
           color={color.hex}
-          zone={zone}
-          art={art}
+          poster={`/thumbs/${product.slug}.webp`}
+          zones={product.zones}
+          arts={{ [zone.id]: art }}
           label={`${product.name} en 3D, coloris ${color.name}, avec un logo d'exemple`}
           className="absolute inset-0"
         />
