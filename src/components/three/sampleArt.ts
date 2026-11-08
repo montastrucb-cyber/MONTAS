@@ -65,5 +65,9 @@ export function makeSampleArt(zone: MarkingZone, ink = "#0B1220", label = "VOTRE
     x.fillStyle = ink;
     label.split(" ").forEach((word, i) => x.fillText(word, W / 2, H / 2 + r * 0.7 + i * fs * 1.15, W * 0.92));
   }
+  x.clearRect(0, 0, W, 2);
+  x.clearRect(0, H - 2, W, 2);
+  x.clearRect(0, 0, 2, H);
+  x.clearRect(W - 2, 0, 2, H);
   return c;
 }

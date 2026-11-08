@@ -26,6 +26,10 @@ const jobs = slugs.map((slug) => ({ slug, color: 0, logo: 0, file: `${slug}.webp
 // Visuels de l'accroche : t-shirt avec logo, en trois coloris
 for (const [i, color] of [3, 0, 2].entries()) jobs.push({ slug: "t-shirt-coton-bio", color, logo: 1, yaw: -0.35, file: `hero-${i}.webp` });
 
+// ONLY=slug1,slug2 pour ne régénérer que certains produits
+const only = process.env.ONLY?.split(",");
+if (only) jobs.splice(0, jobs.length, ...jobs.filter((j) => only.includes(j.slug)));
+
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const page = await browser.newPage({ viewport: { width: 720, height: 720 }, deviceScaleFactor: 1 });
 for (const j of jobs) {

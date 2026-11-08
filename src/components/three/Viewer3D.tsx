@@ -19,6 +19,9 @@ function Loading() {
   );
 }
 
+// Retient, pour toute la page, que le visiteur a déjà interagi
+let userInteracted = false;
+
 type Props = React.ComponentProps<typeof Product3D> & {
   label: string;
   /** Image affichée avant le chargement de la 3D (rendu 3D pré-calculé) */
@@ -36,7 +39,7 @@ export function Viewer3D(props: Props) {
     const el = ref.current;
     if (!el) return;
     let visible = false;
-    let interacted = false;
+    let interacted = userInteracted;
     const maybeStart = () => visible && interacted && setActive(true);
     // 1) la vue doit être (presque) à l'écran…
     const io = new IntersectionObserver(
@@ -52,6 +55,7 @@ export function Viewer3D(props: Props) {
     const events = ["pointermove", "pointerdown", "touchstart", "wheel", "scroll", "keydown"] as const;
     const onInteract = () => {
       interacted = true;
+      userInteracted = true;
       events.forEach((ev) => window.removeEventListener(ev, onInteract));
       maybeStart();
     };

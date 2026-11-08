@@ -56,5 +56,10 @@ export async function renderZoneArt(elements: DesignElement[], zone: MarkingZone
     }
     ctx.restore();
   }
+  // Bordure transparente : le marquage épouse les courbes sans « bavure » sur les bords
+  ctx.clearRect(0, 0, c.width, 2);
+  ctx.clearRect(0, c.height - 2, c.width, 2);
+  ctx.clearRect(0, 0, 2, c.height);
+  ctx.clearRect(c.width - 2, 0, 2, c.height);
   return c;
 }

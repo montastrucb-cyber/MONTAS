@@ -21,6 +21,8 @@ Design : palette bleu nuit, ardoise et sarcelle ; base claire + sections sombres
 ## Tout en 3D
 
 - **Tous les produits sont modélisés en 3D** dans le code (`src/components/three/`), textile compris : t-shirt, sweat à capuche, casquette, tour de cou, mug, tasse, gourde, carnet, stylo, tapis de souris, clé USB, batterie, tote bag, sac à dos et coffrets.
+- **Rendu lisse** : le textile et la bagagerie sont « gonflés » à partir de leur contour (`inflate.ts` : bords arrondis, légers plis, maille du tissu, coutures) ; les objets rigides sont des profils de révolution lissés (céramique brillante, inox, plastique). Le marquage épouse la surface.
+- **Vitrine de l'accueil** : tous les produits de la boutique (hors kits), rangés par gamme.
 - **Configurateur** : la vue principale est le modèle 3D en temps réel. À côté, l'éditeur de la **zone d'impression** (à plat, aux proportions réelles) sert à placer logos et textes ; chaque modification s'affiche aussitôt sur le modèle, qui se retourne tout seul quand on choisit une zone au dos.
 - **Fiches produit** : 3D interactive (tourner, zoomer) avec un logo d'exemple sur les zones choisies.
 - **Miniatures** (accueil, catalogue, kits, panier) : rendus 3D pré-calculés en WebP (`public/thumbs/`, ~180 Ko au total), pour garder des pages rapides.
@@ -43,7 +45,7 @@ Puis, dans un autre terminal :
 npm run thumbnails
 ```
 
-Il faut Playwright (`npm i -D playwright && npx playwright install chromium`). Refaites ensuite un `npm run build` normal : la page technique `/studio` n'existe pas en production.
+Pour un seul produit : `ONLY=t-shirt-coton-bio npm run thumbnails`. Il faut Playwright (`npm i -D playwright && npx playwright install chromium`). Refaites ensuite un `npm run build` normal : la page technique `/studio` n'existe pas en production.
 
 ## Gammes
 
