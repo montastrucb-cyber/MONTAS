@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = { title: "Mentions légales" };
+export const metadata: Metadata = {
+  title: "Mentions légales",
+  description: "Éditeur, hébergeur et informations légales du site.",
+  alternates: { canonical: "/mentions-legales" },
+};
 
 export default function Page() {
   return (

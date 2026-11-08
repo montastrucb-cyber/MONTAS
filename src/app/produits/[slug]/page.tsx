@@ -14,7 +14,11 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/produits/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const p = getProduct(slug);
-  return { title: p?.name ?? "Produit", description: p?.short };
+  return {
+    title: p ? `${p.name} personnalisé` : "Produit",
+    description: p ? `${p.name} personnalisable avec votre logo, dès ${p.moq} pièces. ${p.short}` : undefined,
+    alternates: { canonical: `/produits/${slug}` },
+  };
 }
 
 export default async function ProductPage({ params }: PageProps<"/produits/[slug]">) {

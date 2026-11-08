@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Container, Eyebrow } from "@/components/ui";
-import { DesignerLoader } from "@/components/designer/DesignerLoader";
+import { DesignerLoader, DesignerSkeleton } from "@/components/designer/DesignerLoader";
 
 export const metadata: Metadata = {
   title: "Personnaliser",
   description: "Importez votre logo, placez-le sur le produit et voyez le prix s'ajuster à la quantité.",
+  alternates: { canonical: "/personnaliser" },
 };
 
 export default function PersonnaliserPage({ searchParams }: PageProps<"/personnaliser">) {
@@ -17,7 +18,7 @@ export default function PersonnaliserPage({ searchParams }: PageProps<"/personna
         Importez votre logo, placez-le dans la zone de marquage, ajustez la quantité : le prix se met à jour en direct.
       </p>
       <div className="mt-8">
-        <Suspense fallback={<div className="aspect-[2/1] animate-pulse rounded-[2rem] bg-muted" />}>
+        <Suspense fallback={<DesignerSkeleton />}>
           <Loader searchParams={searchParams} />
         </Suspense>
       </div>

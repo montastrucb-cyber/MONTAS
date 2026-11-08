@@ -4,7 +4,11 @@ import { Clock, FileText, MessageSquare } from "lucide-react";
 import { Container, Eyebrow } from "@/components/ui";
 import { QuoteForm } from "./QuoteForm";
 
-export const metadata: Metadata = { title: "Demander un devis" };
+export const metadata: Metadata = {
+  title: "Demander un devis",
+  description: "Grandes quantités, plusieurs produits ou marquage spécial : recevez un devis détaillé, puis payez en ligne.",
+  alternates: { canonical: "/devis" },
+};
 
 export default function DevisPage({ searchParams }: PageProps<"/devis">) {
   return (

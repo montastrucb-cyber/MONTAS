@@ -55,6 +55,7 @@ export function ProductConfigurator({ product }: { product: Product }) {
             view={view}
             className="h-full w-full p-8"
             showZone={shownZones[0]?.box}
+            label={`${product.name}, coloris ${color.name}, vue ${view === "front" ? "de face" : "de dos"}`}
           />
           {views.length > 1 && (
             <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 rounded-full border border-line bg-surface p-1 text-sm">
@@ -123,6 +124,8 @@ export function ProductConfigurator({ product }: { product: Product }) {
           ) : (
             <input
               type="number"
+              aria-label="Quantité"
+              inputMode="numeric"
               min={product.moq}
               step={1}
               value={simpleQty}

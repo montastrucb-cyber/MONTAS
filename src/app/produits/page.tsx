@@ -6,7 +6,11 @@ import { categories, getCategory, products } from "@/data/catalog";
 import { ProductCard } from "@/components/ProductCard";
 import { Container, Eyebrow } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Produits" };
+export const metadata: Metadata = {
+  title: "Produits personnalisables",
+  description: "Catalogue de goodies, textile et kits de bienvenue personnalisables avec votre logo. Prix dégressifs affichés HT.",
+  alternates: { canonical: "/produits" },
+};
 
 export default function ProduitsPage({ searchParams }: PageProps<"/produits">) {
   return (

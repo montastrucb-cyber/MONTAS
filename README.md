@@ -13,8 +13,39 @@ Cette version est l'**étape « design du site »**. Toutes les pages sont en pl
 | Fiche produit | `/produits/t-shirt-coton-bio` | Couleurs, quantités par taille, paliers de prix, marquage, détail HT/TVA/TTC |
 | Configurateur | `/personnaliser` | Import de logo (PNG, JPG, SVG, 10 Mo max), texte, glisser et redimensionner **dans la zone de marquage**, vues devant et dos, contrôle de la résolution (dpi), réinitialiser, sauvegarder |
 | Panier | `/panier` | Stocké dans le navigateur. Paiement Stripe **pas encore branché** |
-| Devis | `/devis` | Formulaire, envoi par email en attendant le serveur |
-| Juridique | `/mentions-legales`, `/cgv`, `/confidentialite` | **Modèles à faire valider par un professionnel** |
+| Devis | `/devis` | Formulaire validé (navigateur + serveur), anti-spam, envoi par email si Resend est configuré |
+| Juridique | `/mentions-legales`, `/cgv`, `/cgu`, `/confidentialite` (aussi `/rgpd`) | **Modèles à faire valider par un professionnel** |
+
+Design : base claire + sections sombres « tech » (grille lumineuse, effets de verre), polices Space Grotesk et DM Sans, animations avec **Motion** (ex-Framer Motion), qui respectent le réglage « réduire les animations » de l'appareil. Direction choisie avec le module **UI/UX Pro Max** (`.claude/skills/ui-ux-pro-max`).
+
+## Checklist avant lancement (vérifiée)
+
+| # | Point | Où / comment | État |
+|---|---|---|---|
+| 1 | Page RGPD | `/confidentialite` (`/rgpd` y redirige) | ✅ modèle à valider |
+| 2 | Page CGU | `/cgu` | ✅ modèle à valider |
+| 3 | API hors front-end | `src/app/api/devis/route.ts` ; clés lues côté serveur uniquement, voir `.env.example` | ✅ |
+| 4 | HTTPS forcé | en-tête HSTS + CSP dans `next.config.ts` (Vercel redirige aussi HTTP → HTTPS) | ✅ |
+| 5 | Bannière cookies | `src/components/CookieBanner.tsx` ; « Tout refuser » aussi visible que « Accepter », lien « Gérer les cookies » dans le pied de page | ✅ |
+| 6 | Meta title | titre + description propres à chaque page | ✅ |
+| 7 | Image réseaux | `src/app/opengraph-image.tsx` (1200×630) | ✅ |
+| 8 | Favicon | `src/app/icon.svg` + `apple-icon.tsx` | ✅ |
+| 9 | Sitemap + robots.txt | `/sitemap.xml`, `/robots.txt` ; **indexation bloquée tant que `NEXT_PUBLIC_SITE_URL` n'est pas réglée** | ✅ |
+| 10 | Textes des images | chaque visuel produit a un texte alternatif, les décors sont ignorés par les lecteurs d'écran | ✅ |
+| 11 | Images compressées | aucune photo lourde pour l'instant (visuels en SVG) ; `next/image` configuré en AVIF/WebP pour les futures photos | ✅ |
+| 12 | Vitesse | Lighthouse mobile : Performance 93–96, CLS 0 | ✅ |
+| 13 | Contraste | axe-core (WCAG 2.1 AA) : 0 défaut sur 13 pages | ✅ |
+| 14 | Responsive | 375, 768, 1024 et 1440 px : aucun débordement horizontal | ✅ |
+| 15 | Page 404 | `src/app/not-found.tsx` | ✅ |
+| 16 | Liens cassés | 30 liens internes testés : 0 cassé | ✅ |
+| 17 | Validation formulaires | messages sous chaque champ, contrôle refait par le serveur | ✅ |
+| 18 | Anti-spam | champ piège, délai minimum de 3 s, limite de 5 envois / 10 min par adresse IP | ✅ |
+| 19 | Analytics | Vercel Web Analytics (sans cookie), chargé **seulement après « Accepter »** ; à activer dans Vercel → Analytics | ✅ |
+| 20 | Un seul CTA | action principale partout : « Personnaliser mon produit » ; les autres liens sont secondaires | ✅ |
+
+### Variables d'environnement
+
+Copiez `.env.example` en `.env.local` (en local) ou ajoutez-les dans Vercel → Settings → Environment Variables. Rien n'est obligatoire pour faire tourner le site.
 
 ## Lancer le projet sur votre ordinateur
 

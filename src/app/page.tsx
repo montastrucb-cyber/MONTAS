@@ -15,7 +15,9 @@ import {
 import { categories, getProduct, products } from "@/data/catalog";
 import { ProductVisual } from "@/components/ProductVisual";
 import { ProductCard } from "@/components/ProductCard";
-import { ButtonLink, Container, Eyebrow, H2, Serif } from "@/components/ui";
+import { HeroDemo } from "@/components/HeroDemo";
+import { Reveal, Stagger, StaggerItem } from "@/components/Motion";
+import { ButtonLink, Container, Eyebrow, Glow, H2 } from "@/components/ui";
 import { eur } from "@/lib/pricing";
 
 const categoryVisual: Record<string, { slug: string; color: string }> = {
@@ -38,138 +40,127 @@ export default function Home() {
 
   return (
     <>
-      {/* ——— Accroche ——— */}
-      <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-40 right-[-10%] h-[520px] w-[520px] rounded-full bg-lime/40 blur-3xl" />
-        <div className="pointer-events-none absolute left-[-15%] top-40 h-[420px] w-[420px] rounded-full bg-accent-soft blur-3xl" />
-        <Container className="relative grid items-center gap-12 pb-20 pt-12 sm:pt-20 lg:grid-cols-[1.1fr_1fr] lg:pb-28">
-          <div>
-            <p className="rise inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-3 py-1 text-xs text-ink-soft">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Entreprises · Associations · Clubs · Écoles · Événements
-            </p>
-            <h1 className="rise rise-2 mt-6 text-[2.6rem] font-semibold leading-[1.04] tracking-[-0.035em] text-balance sm:text-6xl">
-              Vos goodies à vos couleurs, <Serif>en gros</Serif>, sans prise de tête.
-            </h1>
-            <p className="rise rise-3 mt-6 max-w-xl text-lg leading-relaxed text-ink-soft text-pretty">
-              Choisissez un produit ou un pack, importez votre logo, voyez le résultat en direct et le prix s&apos;ajuster à la
-              quantité. Payez en ligne ou demandez un devis.
-            </p>
-            <div className="rise rise-4 mt-9 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/produits">
-                Découvrir les produits <ArrowRight size={16} />
-              </ButtonLink>
-              <ButtonLink href="/personnaliser" variant="secondary">
-                <MousePointer2 size={16} /> Personnaliser mon produit
-              </ButtonLink>
-            </div>
-            <ul className="rise rise-4 mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-soft">
-              <li className="flex items-center gap-2"><ShieldCheck size={16} className="text-accent" /> Paiement sécurisé</li>
-              <li className="flex items-center gap-2"><FileText size={16} className="text-accent" /> Prix HT affichés</li>
-              <li className="flex items-center gap-2"><MousePointer2 size={16} className="text-accent" /> Aperçu en direct</li>
-            </ul>
-          </div>
+      {/* ——— Accroche (section sombre) ——— */}
+      <section className="px-2 pt-2 sm:px-4">
+        <div className="on-dark relative overflow-hidden rounded-[2rem] bg-night text-white sm:rounded-[2.75rem]">
+          <div aria-hidden="true" className="tech-grid absolute inset-0" />
+          <div aria-hidden="true" className="absolute -right-32 -top-40 h-[560px] w-[560px] rounded-full bg-lime/15 blur-[120px]" />
+          <div aria-hidden="true" className="absolute -bottom-40 -left-24 h-[480px] w-[480px] rounded-full bg-cyan-400/10 blur-[120px]" />
 
-          {/* Visuel : produits + carte de prix */}
-          <div className="rise rise-3 relative mx-auto aspect-square w-full max-w-[500px]">
-            <div className="absolute inset-[6%] rounded-[2.5rem] border border-line bg-surface shadow-[0_40px_80px_-40px_rgba(13,15,18,0.35)]" />
-            <div className="float absolute inset-[10%]">
-              <ProductVisual kind="tshirt" color="#A8BBA2" className="h-full w-full" />
-              <div className="absolute left-1/2 top-[34%] -translate-x-1/2 text-center">
-                <p className="font-display text-3xl italic text-ink/80 sm:text-4xl">Votre</p>
-                <p className="-mt-1 text-xl font-bold tracking-[0.2em] text-ink/80 sm:text-2xl">LOGO</p>
+          <Container className="relative grid items-center gap-14 pb-16 pt-14 sm:pb-24 sm:pt-20 lg:grid-cols-[1.05fr_1fr]">
+            <div>
+              <p className="rise glass inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-white/80">
+                  <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime" />
+                  Entreprises · Associations · Clubs · Écoles
+              </p>
+              <h1 className="mt-7 text-[2.7rem] font-semibold leading-[1.02] tracking-[-0.045em] text-balance sm:text-[4.2rem]">
+                  Vos goodies à vos couleurs, <Glow onDark>en gros</Glow>, sans prise de tête.
+              </h1>
+              <p className="rise rise-2 mt-6 max-w-xl text-lg leading-relaxed text-white/75 text-pretty">
+                  Importez votre logo, voyez le résultat en direct et le prix baisser avec la quantité. Payez en ligne ou
+                  demandez un devis.
+              </p>
+              <div className="rise rise-3 mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                <ButtonLink href="/personnaliser" variant="light" className="w-full sm:w-auto">
+                  <MousePointer2 size={16} aria-hidden="true" /> Personnaliser mon produit
+                </ButtonLink>
+                <Link
+                  href="/produits"
+                  className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-white/80 transition hover:text-white"
+                >
+                  Découvrir les produits <ArrowRight size={15} aria-hidden="true" />
+                </Link>
               </div>
+              <ul className="rise rise-4 mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/70">
+                  <li className="flex items-center gap-2"><ShieldCheck size={16} className="text-lime" aria-hidden="true" /> Paiement sécurisé</li>
+                  <li className="flex items-center gap-2"><FileText size={16} className="text-lime" aria-hidden="true" /> Prix HT affichés</li>
+                  <li className="flex items-center gap-2"><MousePointer2 size={16} className="text-lime" aria-hidden="true" /> Aperçu en direct</li>
+              </ul>
             </div>
-            <div className="absolute -left-2 bottom-[10%] w-[44%] rounded-3xl border border-line bg-surface p-3 shadow-xl sm:-left-6">
-              <ProductVisual kind="mug" color="#1B1C1F" className="w-full" />
+            <div className="rise rise-2">
+              <HeroDemo product={tshirt} />
             </div>
-            <div className="absolute -right-2 top-[6%] w-[52%] rounded-2xl border border-line bg-surface/95 p-4 shadow-xl backdrop-blur sm:-right-6">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-ink-faint">Prix dégressif · exemple</p>
-              <div className="mt-3 space-y-2">
-                {tshirt.tiers.map((t) => (
-                  <div key={t.min} className="flex items-center gap-2 text-xs">
-                    <span className="w-14 text-ink-soft">{t.min}+ pcs</span>
-                    <span className="h-1.5 flex-1 rounded-full bg-muted">
-                      <span className="block h-full rounded-full bg-accent" style={{ width: `${(t.unitPrice / maxTier) * 100}%` }} />
-                    </span>
-                    <span className="w-14 text-right font-semibold">{eur(t.unitPrice)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Container>
+          </Container>
+        </div>
       </section>
 
       {/* ——— Catégories ——— */}
-      <section className="py-20">
+      <section className="py-20 sm:py-24" aria-labelledby="titre-categories">
         <Container>
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <Reveal className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <Eyebrow>Catalogue</Eyebrow>
-              <H2 className="mt-3">Trois univers, un même circuit simple.</H2>
+              <H2 className="mt-3">
+                <span id="titre-categories">Trois univers, un même <Glow>circuit simple</Glow>.</span>
+              </H2>
             </div>
-            <Link href="/produits" className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline">
-              Tout le catalogue <ArrowRight size={15} />
+            <Link href="/produits" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent hover:underline">
+              Tout le catalogue <ArrowRight size={15} aria-hidden="true" />
             </Link>
-          </div>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
+          </Reveal>
+          <Stagger className="mt-10 grid gap-5 md:grid-cols-3">
             {categories.map((c) => {
               const v = categoryVisual[c.slug];
               const p = getProduct(v.slug)!;
               return (
-                <Link
-                  key={c.slug}
-                  href={`/produits?categorie=${c.slug}`}
-                  className="group relative flex flex-col overflow-hidden rounded-3xl border border-line bg-surface p-6 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_rgba(13,15,18,0.35)]"
-                >
-                  <p className="text-xs text-ink-faint">{c.audience}</p>
-                  <h3 className="mt-2 text-xl font-semibold tracking-tight">{c.name}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-ink-soft">{c.short}</p>
-                  <div className="mt-6 aspect-[4/3] rounded-2xl bg-muted">
-                    <ProductVisual kind={p.kind} color={v.color} className="h-full w-full p-4 transition duration-500 group-hover:scale-[1.04]" />
-                  </div>
-                  <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium">
-                    Voir les produits <ArrowRight size={15} className="transition group-hover:translate-x-0.5" />
-                  </span>
-                </Link>
+                <StaggerItem key={c.slug}>
+                  <Link
+                    href={`/produits?categorie=${c.slug}`}
+                    className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface p-6 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_24px_50px_-28px_rgba(13,115,82,0.55)]"
+                  >
+                    <p className="font-mono text-xs text-ink-faint">{c.audience}</p>
+                    <h3 className="mt-2 text-xl font-semibold tracking-tight">{c.name}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-ink-soft">{c.short}</p>
+                    <div className="relative mt-6 aspect-[4/3] overflow-hidden rounded-2xl bg-muted">
+                      <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(198,242,78,0.35),transparent_60%)] opacity-0 transition duration-500 group-hover:opacity-100" />
+                      <ProductVisual kind={p.kind} color={v.color} label={p.name} className="relative h-full w-full p-4 transition duration-500 group-hover:scale-[1.05]" />
+                    </div>
+                    <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium">
+                      Voir les produits <ArrowRight size={15} aria-hidden="true" className="transition group-hover:translate-x-1" />
+                    </span>
+                  </Link>
+                </StaggerItem>
               );
             })}
-          </div>
+          </Stagger>
         </Container>
       </section>
 
       {/* ——— Fonctionnement ——— */}
-      <section className="py-20">
+      <section id="fonctionnement" className="scroll-mt-20 py-20 sm:py-24" aria-labelledby="titre-etapes">
         <Container>
-          <div className="rounded-[2.5rem] bg-ink px-6 py-14 text-white sm:px-12 sm:py-16">
-            <Eyebrow className="text-lime">Comment ça marche</Eyebrow>
+          <Reveal>
+            <Eyebrow>Comment ça marche</Eyebrow>
             <H2 className="mt-3 max-w-2xl">
-              De votre logo à votre colis, en <Serif>quatre étapes</Serif>.
+              <span id="titre-etapes">De votre logo à votre colis, en <Glow>quatre étapes</Glow>.</span>
             </H2>
-            <ol className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {steps.map((s, i) => (
-                <li key={s.title} className="relative">
-                  <div className="flex items-center gap-3">
-                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10 text-lime">
-                      <s.icon size={20} />
-                    </span>
-                    <span className="text-sm text-white/40">0{i + 1}</span>
-                  </div>
-                  <h3 className="mt-5 text-lg font-medium">{s.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-white/65">{s.text}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
+          </Reveal>
+          <Stagger className="relative mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4" gap={0.1}>
+            <div aria-hidden="true" className="absolute left-0 right-0 top-[34px] hidden h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent lg:block" />
+            {steps.map((s, i) => (
+              <StaggerItem key={s.title} className="relative rounded-3xl border border-line bg-surface p-6">
+                <div className="flex items-center justify-between">
+                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-night text-lime shadow-[0_0_24px_-6px_rgba(198,242,78,0.7)]">
+                    <s.icon size={20} aria-hidden="true" />
+                  </span>
+                  <span className="font-mono text-sm text-ink-faint">0{i + 1}</span>
+                </div>
+                <h3 className="mt-6 text-lg font-semibold">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink-soft">{s.text}</p>
+              </StaggerItem>
+            ))}
+          </Stagger>
         </Container>
       </section>
 
       {/* ——— Avantages du gros ——— */}
-      <section className="py-20">
+      <section className="py-20 sm:py-24" aria-labelledby="titre-gros">
         <Container className="grid gap-12 lg:grid-cols-2 lg:items-center">
-          <div>
+          <Reveal>
             <Eyebrow>Commandes en gros</Eyebrow>
-            <H2 className="mt-3">Plus vous commandez, plus le prix unitaire baisse.</H2>
+            <H2 className="mt-3">
+              <span id="titre-gros">Plus vous commandez, plus le <Glow>prix unitaire baisse</Glow>.</span>
+            </H2>
             <p className="mt-5 text-lg leading-relaxed text-ink-soft">
               Chaque produit a des paliers de prix clairs. Le calcul affiche tout : produit, marquage, frais de préparation,
               livraison et TVA. Vous savez ce que vous payez avant de commander.
@@ -187,97 +178,102 @@ export default function Home() {
                 </li>
               ))}
             </ul>
-          </div>
-          <div className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
-            <div className="flex items-center justify-between">
+          </Reveal>
+          <Reveal delay={0.1} className="on-dark relative overflow-hidden rounded-[2rem] bg-night p-6 text-white sm:p-8">
+            <div aria-hidden="true" className="tech-grid absolute inset-0 opacity-70" />
+            <div className="relative flex items-center justify-between">
               <p className="font-medium">{tshirt.name}</p>
-              <p className="text-xs text-ink-faint">Prix unitaire HT · exemple</p>
+              <p className="font-mono text-xs text-white/70">Prix HT / pièce · exemple</p>
             </div>
-            <div className="mt-8 flex h-56 items-end gap-3 sm:gap-5">
+            <Stagger className="relative mt-8 flex h-56 items-end gap-3 sm:gap-5" gap={0.12}>
               {tshirt.tiers.map((t) => (
-                <div key={t.min} className="flex flex-1 flex-col items-center gap-2">
-                  <span className="text-sm font-semibold">{eur(t.unitPrice)}</span>
+                <StaggerItem key={t.min} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
+                  <span className="font-display text-sm font-semibold tabular-nums">{eur(t.unitPrice)}</span>
                   <div
-                    className="w-full rounded-t-xl bg-gradient-to-t from-accent to-accent/70"
-                    style={{ height: `${(t.unitPrice / maxTier) * 170}px` }}
+                    className="w-full rounded-t-xl bg-gradient-to-t from-accent to-lime shadow-[0_0_30px_-8px_rgba(198,242,78,0.6)]"
+                    style={{ height: `${(t.unitPrice / maxTier) * 160}px` }}
                   />
-                  <span className="text-xs text-ink-soft">{t.min}+ pcs</span>
-                </div>
+                  <span className="font-mono text-xs text-white/70">{t.min}+</span>
+                </StaggerItem>
               ))}
-            </div>
-            <p className="mt-6 text-xs text-ink-faint">Tarifs de démonstration, hors marquage et livraison.</p>
-          </div>
+            </Stagger>
+            <p className="relative mt-6 text-xs text-white/70">Tarifs de démonstration, hors marquage et livraison.</p>
+          </Reveal>
         </Container>
       </section>
 
       {/* ——— Sélection ——— */}
-      <section className="py-20">
+      <section className="py-20 sm:py-24" aria-labelledby="titre-selection">
         <Container>
-          <Eyebrow>Sélection</Eyebrow>
-          <H2 className="mt-3">Pour commencer.</H2>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <Reveal>
+            <Eyebrow>Sélection</Eyebrow>
+            <H2 className="mt-3">
+              <span id="titre-selection">Pour commencer.</span>
+            </H2>
+          </Reveal>
+          <Stagger className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {featured.map((p) => (
-              <ProductCard key={p.slug} product={p} />
+              <StaggerItem key={p.slug}>
+                <ProductCard product={p} />
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </Container>
       </section>
 
       {/* ——— Professionnels ——— */}
-      <section id="professionnels" className="scroll-mt-20 py-20">
+      <section id="professionnels" className="scroll-mt-20 py-20 sm:py-24" aria-labelledby="titre-pros">
         <Container>
           <div className="grid gap-10 rounded-[2.5rem] border border-line bg-surface p-6 sm:p-12 lg:grid-cols-[1fr_1.2fr]">
-            <div>
+            <Reveal>
               <Eyebrow>Pour les professionnels</Eyebrow>
               <H2 className="mt-3">
-                Un espace entreprise pensé pour <Serif>recommander</Serif> sans effort.
+                <span id="titre-pros">Un espace entreprise pensé pour <Glow>recommander</Glow> sans effort.</span>
               </H2>
               <p className="mt-5 leading-relaxed text-ink-soft">
                 Vos logos, vos designs et vos commandes restent au même endroit. Quand le stock de t-shirts de votre club
                 s&apos;épuise, vous relancez la même commande en deux clics.
               </p>
-              <p className="mt-6 inline-flex rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent">
+              <p className="mt-6 inline-flex rounded-full bg-accent-soft px-3 py-1 font-mono text-xs text-accent">
                 Espace client : bientôt disponible
               </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            </Reveal>
+            <Stagger className="grid gap-4 sm:grid-cols-2">
               {[
                 { icon: Repeat, t: "Réassort en 2 clics", d: "Recommandez le même produit personnalisé, changez juste la quantité ou la taille." },
                 { icon: Package, t: "Logos enregistrés", d: "Vos fichiers sont conservés pour vos prochaines commandes." },
                 { icon: FileText, t: "Devis et factures", d: "Retrouvez vos devis PDF et vos factures, prêts pour la comptabilité." },
                 { icon: Building2, t: "Compte entreprise", d: "Adresses de facturation et de livraison, suivi de toutes vos livraisons." },
               ].map((f) => (
-                <div key={f.t} className="rounded-2xl bg-muted p-5">
-                  <f.icon size={20} className="text-accent" />
-                  <p className="mt-4 font-medium">{f.t}</p>
+                <StaggerItem key={f.t} className="rounded-2xl bg-muted p-5">
+                  <f.icon size={20} className="text-accent" aria-hidden="true" />
+                  <h3 className="mt-4 text-base font-semibold">{f.t}</h3>
                   <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{f.d}</p>
-                </div>
+                </StaggerItem>
               ))}
-            </div>
+            </Stagger>
           </div>
         </Container>
       </section>
 
       {/* ——— Devis ——— */}
-      <section className="py-20">
-        <Container>
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-accent px-6 py-16 text-center text-white sm:px-12">
-            <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-lime/30 blur-3xl" />
-            <H2 className="relative mx-auto max-w-2xl">Une grosse commande ou un projet sur mesure ?</H2>
-            <p className="relative mx-auto mt-4 max-w-xl text-white/80">
-              Plusieurs produits, de grandes quantités, un marquage particulier : décrivez votre besoin, nous revenons vers
-              vous avec un devis détaillé.
-            </p>
-            <div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <ButtonLink href="/devis" variant="light">
-                Demander un devis <ArrowRight size={16} />
-              </ButtonLink>
-              <ButtonLink href="/produits" className="border border-white/30 bg-transparent text-white hover:bg-white/10">
-                Voir les produits
-              </ButtonLink>
-            </div>
+      <section className="px-2 py-12 sm:px-4" aria-labelledby="titre-devis">
+        <Reveal className="on-dark relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] bg-night px-6 py-16 text-center text-white sm:px-12 sm:py-20">
+          <div aria-hidden="true" className="tech-grid absolute inset-0" />
+          <div aria-hidden="true" className="absolute left-1/2 top-0 h-72 w-[600px] -translate-x-1/2 rounded-full bg-lime/20 blur-[100px]" />
+          <H2 className="relative mx-auto max-w-2xl">
+            <span id="titre-devis">Une grosse commande ou un <Glow onDark>projet sur mesure</Glow> ?</span>
+          </H2>
+          <p className="relative mx-auto mt-4 max-w-xl text-white/75">
+            Plusieurs produits, de grandes quantités, un marquage particulier : décrivez votre besoin, nous revenons vers
+            vous avec un devis détaillé.
+          </p>
+          <div className="relative mt-9 flex justify-center">
+            <ButtonLink href="/devis" variant="light">
+              Demander un devis <ArrowRight size={16} aria-hidden="true" />
+            </ButtonLink>
           </div>
-        </Container>
+        </Reveal>
       </section>
     </>
   );

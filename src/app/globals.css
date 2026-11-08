@@ -1,17 +1,23 @@
 @import "tailwindcss";
 
-/* Palette : encre profonde, fond chaud, accent vert « frais » */
+/*
+  Système de design (recommandations UI/UX Pro Max) :
+  base claire lisible, section d'accroche sombre « tech », effets de verre,
+  Space Grotesk (titres) + DM Sans (texte), contraste texte ≥ 4,5:1.
+*/
 :root {
-  --background: #fafaf7;
+  --background: #f6f7f4;
   --surface: #ffffff;
-  --muted: #f1f1ec;
-  --ink: #0d0f12;
-  --ink-soft: #4a4f57;
-  --ink-faint: #868b93;
-  --line: #e4e4de;
-  --accent: #127a5b;
-  --accent-soft: #e3f3ec;
-  --lime: #d4f26a;
+  --muted: #eceee9;
+  --ink: #0a0c10;
+  --ink-soft: #4b515c; /* 7,6:1 sur le fond */
+  --ink-faint: #5f6570; /* 5,6:1 sur le fond */
+  --line: #dfe2dc;
+  --accent: #0d7352; /* 5,9:1 sur blanc */
+  --accent-soft: #e2f3ec;
+  --lime: #c6f24e;
+  --night: #07090c;
+  --night-2: #0f1218;
 }
 
 @theme inline {
@@ -25,19 +31,45 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-lime: var(--lime);
-  --font-sans: var(--font-sans);
+  --color-night: var(--night);
+  --color-night-2: var(--night-2);
+  --font-sans: var(--font-body);
   --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  background: var(--background);
-  color: var(--ink);
-  font-family: var(--font-sans), system-ui, sans-serif;
-  font-feature-settings: "ss01", "cv11";
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--background);
+    color: var(--ink);
+    font-family: var(--font-body), system-ui, sans-serif;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), var(--font-body), sans-serif;
+  }
+  button,
+  [role="button"],
+  summary,
+  label:has(input[type="radio"]),
+  label:has(input[type="checkbox"]) {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  .on-dark :focus-visible {
+    outline-color: var(--lime);
+  }
 }
 
 ::selection {
@@ -45,50 +77,52 @@ body {
   color: var(--ink);
 }
 
-/* Apparition douce au défilement */
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.rise {
-  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-.rise-2 {
-  animation-delay: 0.08s;
-}
-.rise-3 {
-  animation-delay: 0.16s;
-}
-.rise-4 {
-  animation-delay: 0.24s;
+/* Grille lumineuse « futuriste » des sections sombres */
+.tech-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 75%);
 }
 
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
+.text-glow {
+  background: linear-gradient(100deg, #c6f24e 0%, #6ee7b7 45%, #67e8f9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
-.float {
-  animation: float 6s ease-in-out infinite;
+
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-light {
+  background: rgba(246, 247, 244, 0.88);
+  border: 1px solid rgba(10, 12, 16, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.btn-glow {
+  box-shadow:
+    0 0 0 1px rgba(198, 242, 78, 0.5),
+    0 10px 40px -8px rgba(198, 242, 78, 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rise,
-  .float {
-    animation: none;
-  }
   html {
     scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -111,4 +145,34 @@ body {
 }
 .prose-legal p + p {
   margin-top: 0.75rem;
+}
+.prose-legal a {
+  text-decoration: underline;
+}
+
+/* Apparition de l'accroche en CSS pur : visible avant même le chargement du JavaScript */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.rise-1 {
+  animation-delay: 0.06s;
+}
+.rise-2 {
+  animation-delay: 0.12s;
+}
+.rise-3 {
+  animation-delay: 0.18s;
+}
+.rise-4 {
+  animation-delay: 0.24s;
 }

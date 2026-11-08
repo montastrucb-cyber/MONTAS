@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { site } from "@/config/site";
 
-export const metadata: Metadata = { title: "Conditions générales de vente" };
+export const metadata: Metadata = {
+  title: "Conditions générales de vente",
+  description: "Conditions de commande, de prix, de fabrication et de livraison des produits personnalisés.",
+  alternates: { canonical: "/cgv" },
+};
 
 export default function Page() {
   return (

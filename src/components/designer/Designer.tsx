@@ -285,7 +285,12 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
       {/* ——— Canevas ——— */}
       <div className="lg:sticky lg:top-24 lg:self-start">
         <div ref={wrapRef} className="relative aspect-square w-full overflow-hidden rounded-[2rem] border border-line bg-muted">
-          <div ref={svgWrapRef} className="pointer-events-none absolute inset-0">
+          <div
+            ref={svgWrapRef}
+            role="img"
+            aria-label={`Aperçu de personnalisation : ${product.name}, coloris ${color.name}, ${visible.length} élément(s) placé(s)`}
+            className="pointer-events-none absolute inset-0"
+          >
             <ProductVisual kind={product.kind} color={color.hex} view={view} className="h-full w-full" showZone={zone.view === view ? zone.box : null} />
           </div>
           <Stage
@@ -375,6 +380,7 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
       <div className="space-y-7">
         <Panel title="1. Produit">
           <select
+            aria-label="Produit à personnaliser"
             value={product.slug}
             onChange={(e) => changeProduct(e.target.value)}
             className="w-full rounded-xl border border-line bg-surface px-4 py-3 outline-none focus:border-ink"
@@ -456,6 +462,7 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
               onChange={(e) => setTextDraft(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addText()}
               placeholder="Ajouter un texte (ex. nom du club)"
+              aria-label="Texte à ajouter"
               maxLength={60}
               className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm outline-none focus:border-ink"
             />
@@ -517,6 +524,7 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
               {selected.type === "text" && (
                 <div className="mt-3 space-y-3">
                   <input
+                    aria-label="Modifier le texte"
                     value={selected.text}
                     onChange={(e) => update(selected.id, { text: e.target.value })}
                     className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-ink"
@@ -570,12 +578,15 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
           <div className="flex flex-wrap items-center gap-3">
             <input
               type="number"
+              aria-label="Quantité"
+              inputMode="numeric"
               min={product.moq}
               value={qty}
               onChange={(e) => setQty(Math.max(0, parseInt(e.target.value) || 0))}
               className="w-32 rounded-xl border border-line bg-surface px-4 py-2.5 font-medium outline-none focus:border-ink"
             />
             <select
+              aria-label="Technique de marquage"
               value={techniqueId}
               onChange={(e) => setTechniqueId(e.target.value)}
               className="flex-1 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm outline-none focus:border-ink"

@@ -9,8 +9,8 @@ import { useCart } from "@/lib/cart";
 export function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-      <span className="grid h-7 w-7 place-items-center rounded-lg bg-ink text-[13px] text-lime">AS</span>
-      <span>{site.name}</span>
+      <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-xl bg-night font-mono text-[12px] text-lime shadow-[0_0_20px_-4px_rgba(198,242,78,0.6)]">AS</span>
+      <span className="font-display text-[17px]">{site.name}</span>
     </Link>
   );
 }
@@ -30,12 +30,12 @@ export function Header() {
   return (
     <header
       className={`sticky top-0 z-40 transition-colors ${
-        scrolled || open ? "border-b border-line bg-background/85 backdrop-blur-xl" : "border-b border-transparent"
+        open ? "border-b border-line bg-background" : scrolled ? "glass-light border-x-0 border-t-0" : "border-b border-transparent bg-background"
       }`}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Logo />
-        <nav className="hidden items-center gap-7 text-sm text-ink-soft md:flex">
+        <nav aria-label="Navigation principale" className="hidden items-center gap-7 text-sm text-ink-soft md:flex">
           {nav.map((n) => (
             <Link key={n.href} href={n.href} className="transition-colors hover:text-ink">
               {n.label}
@@ -45,10 +45,10 @@ export function Header() {
         <div className="flex items-center gap-2">
           <Link
             href="/panier"
-            className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-muted"
+            className="relative grid h-11 w-11 place-items-center rounded-full hover:bg-muted"
             aria-label={`Panier (${lines.length})`}
           >
-            <ShoppingBag size={19} />
+            <ShoppingBag size={19} aria-hidden="true" />
             {lines.length > 0 && (
               <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold text-white">
                 {lines.length}
@@ -57,22 +57,22 @@ export function Header() {
           </Link>
           <Link
             href="/personnaliser"
-            className="hidden rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-ink/85 sm:inline-flex"
+            className="hidden min-h-10 items-center rounded-full bg-ink px-4 text-sm font-medium text-white transition hover:bg-ink/85 sm:inline-flex"
           >
             Personnaliser
           </Link>
           <button
-            className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted md:hidden"
+            className="grid h-11 w-11 place-items-center rounded-full hover:bg-muted md:hidden"
             onClick={() => setOpen((o) => !o)}
-            aria-label="Menu"
+            aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
             aria-expanded={open}
           >
-            {open ? <X size={20} /> : <Menu size={20} />}
+            {open ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
           </button>
         </div>
       </div>
       {open && (
-        <nav className="border-t border-line px-4 pb-6 pt-2 md:hidden">
+        <nav aria-label="Navigation mobile" className="border-t border-line px-4 pb-6 pt-2 md:hidden">
           {nav.map((n) => (
             <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="block border-b border-line py-3.5 text-[15px]">
               {n.label}

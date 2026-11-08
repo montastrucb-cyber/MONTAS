@@ -15,20 +15,26 @@ type Props = {
   view?: View;
   className?: string;
   showZone?: { x: number; y: number; w: number; h: number } | null;
+  /** Texte alternatif. Sans label, le dessin est considéré comme décoratif. */
+  label?: string;
 };
 
 /**
  * Illustrations vectorielles maison des produits (repère 400 × 400).
  * À remplacer plus tard par de vraies photos ou des gabarits fournisseurs.
  */
-export function ProductVisual({ kind, color, view = "front", className, showZone }: Props) {
+export function ProductVisual({ kind, color, view = "front", className, showZone, label }: Props) {
   const dark = isDark(color);
   const line = dark ? "rgba(255,255,255,0.16)" : "rgba(0,0,0,0.12)";
   const shade = dark ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.06)";
   const id = `g-${kind}-${color.replace("#", "")}-${view}`;
 
   return (
-    <svg viewBox="0 0 400 400" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 400 400"
+      className={className}
+      {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}
+    >
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#fff" stopOpacity={dark ? 0.08 : 0.35} />
