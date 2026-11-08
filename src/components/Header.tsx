@@ -9,7 +9,7 @@ import { useCart } from "@/lib/cart";
 export function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-      <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-xl bg-night font-mono text-[12px] text-lime shadow-[0_0_20px_-4px_rgba(198,242,78,0.6)]">AS</span>
+      <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-xl bg-night font-mono text-[12px] text-glow shadow-[0_0_20px_-4px_rgba(94,234,212,0.6)]">AS</span>
       <span className="font-display text-[17px]">{site.name}</span>
     </Link>
   );

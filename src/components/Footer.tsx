@@ -50,7 +50,7 @@ export function Footer() {
 function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <nav aria-label={title}>
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-lime">{title}</p>
+      <p className="font-mono text-xs uppercase tracking-[0.16em] text-glow">{title}</p>
       <ul className="mt-4 space-y-2.5">{children}</ul>
     </nav>
   );

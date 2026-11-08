@@ -3,15 +3,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Image as KImage, Layer, Stage, Text as KText, Transformer } from "react-konva";
+import { Image as KImage, Layer, Line, Stage, Text as KText, Transformer } from "react-konva";
 import type Konva from "konva";
 import clsx from "clsx";
 import {
   AlertTriangle,
+  ArrowDownToLine,
+  ArrowUpToLine,
+  Bold,
+  Box,
   CheckCircle2,
+  Copy,
   Crosshair,
   ImagePlus,
+  Italic,
+  Maximize2,
+  PenTool,
   RotateCcw,
+  RotateCw,
   Save,
   Trash2,
   Type,
@@ -21,9 +30,13 @@ import { ProductVisual, isDark } from "@/components/ProductVisual";
 import { QtyStepper, QuoteBreakdown, TierTable } from "@/components/PriceSummary";
 import { computeQuote } from "@/lib/pricing";
 import { useCart } from "@/lib/cart";
+import { Viewer3D } from "@/components/three/Viewer3D";
+import { supports3D } from "@/components/three/support";
 import {
   ACCEPTED_TYPES,
   MAX_FILE_BYTES,
+  clampToZone,
+  rotatedHalfExtents,
   imageQuality,
   loadProject,
   saveProject,
@@ -34,10 +47,12 @@ import {
 const BASE = 400; // repère du visuel
 const FONTS = [
   { label: "Sans", value: "Arial, Helvetica, sans-serif" },
+  { label: "Arrondie", value: "'Trebuchet MS', Verdana, sans-serif" },
   { label: "Serif", value: "Georgia, serif" },
   { label: "Impact", value: "Impact, 'Arial Black', sans-serif" },
   { label: "Mono", value: "'Courier New', monospace" },
 ];
+const TEXT_COLORS = ["#0B1220", "#FFFFFF", "#0F766E", "#1E2A44", "#B91C1C", "#D97706", "#C9A227"];
 
 function useHtmlImage(src?: string) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
@@ -87,6 +102,9 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
   const [qty, setQty] = useState(product.moq);
   const [techniqueId, setTechniqueId] = useState(product.techniques[0].id);
   const [textDraft, setTextDraft] = useState("");
+  const [mode, setMode] = useState<"2d" | "3d">("2d");
+  const [guides, setGuides] = useState<Guides | null>(null);
+  const [art3d, setArt3d] = useState<HTMLCanvasElement | null>(null);
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
@@ -134,6 +152,7 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
     setQty(p.moq);
     setTechniqueId(p.techniques[0].id);
     setError(null);
+    if (!supports3D(p.kind)) setMode("2d");
   }
 
   function changeView(v: View) {
@@ -145,16 +164,6 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
 
   function update(id: string, patch: Partial<DesignElement>) {
     setElements((els) => els.map((e) => (e.id === id ? { ...e, ...patch } : e)));
-  }
-
-  /** Garde l'élément entièrement dans sa zone de marquage */
-  function clamp(el: Pick<DesignElement, "x" | "y" | "width" | "height">, z: MarkingZone) {
-    const w = Math.min(el.width, z.box.w);
-    const h = Math.min(el.height, z.box.h);
-    return {
-      x: Math.min(Math.max(el.x, z.box.x), z.box.x + z.box.w - w),
-      y: Math.min(Math.max(el.y, z.box.y), z.box.y + z.box.h - h),
-    };
   }
 
   async function onFile(file: File | undefined) {
@@ -232,6 +241,69 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
     const z = zoneById(selected.zoneId);
     update(selected.id, { x: z.box.x + (z.box.w - selected.width) / 2, y: z.box.y + (z.box.h - selected.height) / 2 });
   }
+
+  /** Agrandit l'élément au maximum dans sa zone (en gardant ses proportions) */
+  function fitSelected() {
+    if (!selected) return;
+    const z = zoneById(selected.zoneId);
+    const { hw, hh } = rotatedHalfExtents(selected.width, selected.height, selected.rotation);
+    const k = Math.min((z.box.w * 0.98) / (hw * 2), (z.box.h * 0.98) / (hh * 2));
+    const width = selected.width * k;
+    const height = selected.height * k;
+    const patch: Partial<DesignElement> = { x: z.box.x + (z.box.w - width) / 2, y: z.box.y + (z.box.h - height) / 2 };
+    if (selected.type === "image") Object.assign(patch, { width, height });
+    else patch.fontSize = (selected.fontSize ?? 20) * k;
+    update(selected.id, patch);
+  }
+
+  function rotateSelected(deg: number) {
+    if (!selected) return;
+    const rotation = (((selected.rotation ?? 0) + deg + 540) % 360) - 180;
+    const z = zoneById(selected.zoneId);
+    update(selected.id, { rotation, ...clampToZone({ ...selected, rotation }, z) });
+  }
+
+  function duplicateSelected() {
+    if (!selected) return;
+    const z = zoneById(selected.zoneId);
+    const copy = { ...selected, id: `el-${crypto.randomUUID().slice(0, 8)}` };
+    Object.assign(copy, clampToZone({ ...copy, x: copy.x + 8, y: copy.y + 8 }, z));
+    setElements((els) => [...els, copy]);
+    setSelectedId(copy.id);
+  }
+
+  /** Premier plan / arrière-plan */
+  function moveLayer(toFront: boolean) {
+    if (!selected) return;
+    setElements((els) => {
+      const rest = els.filter((e) => e.id !== selected.id);
+      return toFront ? [...rest, selected] : [selected, ...rest];
+    });
+  }
+
+  // ——— Aperçu 3D ———
+  const can3D = supports3D(product.kind);
+  const zone3D = product.zones[0];
+
+  function enter3D() {
+    setSelectedId(null);
+    if (zone3D.view !== view) changeView(zone3D.view);
+    setMode("3d");
+  }
+
+  // Après chaque modification, on « photographie » la zone de marquage pour la 3D
+  useEffect(() => {
+    if (mode !== "3d") return;
+    const raf = requestAnimationFrame(() => {
+      const stage = stageRef.current;
+      if (!stage) return;
+      trRef.current?.nodes([]);
+      const b = zone3D.box;
+      const pixelRatio = Math.min(4, 1024 / (b.w * scale));
+      setArt3d(stage.toCanvas({ x: b.x * scale, y: b.y * scale, width: b.w * scale, height: b.h * scale, pixelRatio }));
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [mode, elements, scale, zone3D, view]);
 
   function reset() {
     setElements([]);
@@ -315,38 +387,87 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
                     setZoneId(el.zoneId);
                   }}
                   onChange={(patch) => update(el.id, patch)}
-                  clamp={clamp}
+                  onGuides={setGuides}
                 />
               ))}
+              {guides?.v && zone.view === view && (
+                <Line points={[zone.box.x + zone.box.w / 2, zone.box.y, zone.box.x + zone.box.w / 2, zone.box.y + zone.box.h]} stroke="#0EA5E9" strokeWidth={1 / scale} dash={[4, 3]} listening={false} />
+              )}
+              {guides?.h && zone.view === view && (
+                <Line points={[zone.box.x, zone.box.y + zone.box.h / 2, zone.box.x + zone.box.w, zone.box.y + zone.box.h / 2]} stroke="#0EA5E9" strokeWidth={1 / scale} dash={[4, 3]} listening={false} />
+              )}
               <Transformer
                 ref={trRef}
-                rotateEnabled={false}
+                rotateEnabled
+                rotationSnaps={[0, 45, 90, 135, 180, -45, -90, -135]}
+                rotationSnapTolerance={6}
+                rotateAnchorOffset={22}
                 keepRatio
                 enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]}
                 anchorSize={10}
                 anchorCornerRadius={5}
-                borderStroke="#127A5B"
-                anchorStroke="#127A5B"
+                borderStroke="#0F766E"
+                anchorStroke="#0F766E"
                 boundBoxFunc={(oldBox, newBox) => {
                   if (!selected) return newBox;
                   const z = zoneById(selected.zoneId).box;
-                  const minPx = 8;
-                  const inside =
-                    newBox.x >= z.x * scale - 0.5 &&
-                    newBox.y >= z.y * scale - 0.5 &&
-                    newBox.x + newBox.width <= (z.x + z.w) * scale + 0.5 &&
-                    newBox.y + newBox.height <= (z.y + z.h) * scale + 0.5;
-                  return inside && newBox.width > minPx && newBox.height > minPx ? newBox : oldBox;
+                  if (newBox.width < 8 || newBox.height < 8) return oldBox;
+                  // Les 4 coins de la boîte (éventuellement tournée) doivent rester dans la zone
+                  const c = Math.cos(newBox.rotation);
+                  const s = Math.sin(newBox.rotation);
+                  const corners = [
+                    [0, 0],
+                    [newBox.width, 0],
+                    [0, newBox.height],
+                    [newBox.width, newBox.height],
+                  ].map(([dx, dy]) => [newBox.x + dx * c - dy * s, newBox.y + dx * s + dy * c]);
+                  const inside = corners.every(
+                    ([x, y]) => x >= z.x * scale - 1 && y >= z.y * scale - 1 && x <= (z.x + z.w) * scale + 1 && y <= (z.y + z.h) * scale + 1,
+                  );
+                  return inside ? newBox : oldBox;
                 }}
               />
             </Layer>
           </Stage>
-          {elements.length === 0 && (
+          {elements.length === 0 && mode === "2d" && (
             <div className="pointer-events-none absolute inset-x-0 bottom-16 text-center text-sm text-ink-faint">
               Importez un logo ou ajoutez un texte pour commencer
             </div>
           )}
-          {views.length > 1 && (
+          {mode === "3d" && (
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#edf1f5_70%)]">
+              <Viewer3D
+                kind={product.kind}
+                color={color.hex}
+                zone={zone3D}
+                art={art3d}
+                label={`Aperçu 3D : ${product.name}, coloris ${color.name}, avec votre marquage`}
+                className="absolute inset-0"
+              />
+              <p className="pointer-events-none absolute inset-x-0 bottom-16 text-center text-xs text-ink-faint">
+                Faites glisser pour tourner · molette ou pincement pour zoomer
+              </p>
+            </div>
+          )}
+          {can3D && (
+            <div className="absolute right-3 top-3 flex rounded-full border border-line bg-surface p-1 text-sm shadow-sm" role="group" aria-label="Mode d'affichage">
+              <button
+                onClick={() => setMode("2d")}
+                aria-pressed={mode === "2d"}
+                className={clsx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 transition", mode === "2d" ? "bg-ink text-white" : "text-ink-soft")}
+              >
+                <PenTool size={14} aria-hidden="true" /> Édition 2D
+              </button>
+              <button
+                onClick={enter3D}
+                aria-pressed={mode === "3d"}
+                className={clsx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 transition", mode === "3d" ? "bg-ink text-white" : "text-ink-soft")}
+              >
+                <Box size={14} aria-hidden="true" /> Aperçu 3D
+              </button>
+            </div>
+          )}
+          {views.length > 1 && mode === "2d" && (
             <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 rounded-full border border-line bg-surface p-1 text-sm shadow-sm">
               {views.map((v) => (
                 <button
@@ -522,54 +643,121 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
             <div className="mt-4 rounded-2xl bg-muted p-4">
               <p className="text-xs font-medium uppercase tracking-wider text-ink-faint">Élément sélectionné</p>
               {selected.type === "text" && (
-                <div className="mt-3 space-y-3">
+                <div className="mt-3 space-y-4">
                   <input
                     aria-label="Modifier le texte"
                     value={selected.text}
+                    maxLength={60}
                     onChange={(e) => update(selected.id, { text: e.target.value })}
                     className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-ink"
                   />
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Police">
                     {FONTS.map((f) => (
                       <button
                         key={f.label}
                         onClick={() => update(selected.id, { fontFamily: f.value })}
+                        aria-pressed={selected.fontFamily === f.value}
                         style={{ fontFamily: f.value }}
-                        className={clsx(
-                          "rounded-lg border px-3 py-1 text-sm",
-                          selected.fontFamily === f.value ? "border-ink bg-surface" : "border-line",
-                        )}
+                        className={clsx("min-h-9 rounded-lg border px-3 text-sm", selected.fontFamily === f.value ? "border-ink bg-surface" : "border-line")}
                       >
                         {f.label}
                       </button>
                     ))}
-                    <label className="ml-auto flex items-center gap-2 text-sm text-ink-soft">
-                      Couleur
-                      <input
-                        type="color"
-                        value={selected.fill}
-                        onChange={(e) => update(selected.id, { fill: e.target.value })}
-                        className="h-8 w-8 cursor-pointer rounded border-0 bg-transparent"
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ToolButton label="Gras" active={selected.bold !== false} onClick={() => update(selected.id, { bold: selected.bold === false })}>
+                      <Bold size={15} aria-hidden="true" />
+                    </ToolButton>
+                    <ToolButton label="Italique" active={!!selected.italic} onClick={() => update(selected.id, { italic: !selected.italic })}>
+                      <Italic size={15} aria-hidden="true" />
+                    </ToolButton>
+                    <span className="mx-1 h-6 w-px bg-line" aria-hidden="true" />
+                    <span className="text-xs text-ink-soft">Couleur</span>
+                    {TEXT_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => update(selected.id, { fill: c })}
+                        aria-label={`Couleur ${c}`}
+                        aria-pressed={selected.fill?.toUpperCase() === c}
+                        className={clsx("h-7 w-7 rounded-full ring-1 ring-black/15", selected.fill?.toUpperCase() === c && "ring-2 ring-ink ring-offset-1")}
+                        style={{ background: c }}
                       />
+                    ))}
+                    <label className="ml-1 inline-flex items-center" title="Autre couleur">
+                      <span className="sr-only">Autre couleur de texte</span>
+                      <input type="color" value={selected.fill} onChange={(e) => update(selected.id, { fill: e.target.value })} className="h-8 w-8 cursor-pointer rounded border-0 bg-transparent" />
                     </label>
                   </div>
+                  <Slider
+                    label="Taille du texte"
+                    value={Math.round(selected.fontSize ?? 20)}
+                    min={6}
+                    max={Math.round(zoneById(selected.zoneId).box.h)}
+                    onChange={(v) => update(selected.id, { fontSize: v })}
+                  />
+                  <Slider label="Espacement des lettres" value={selected.letterSpacing ?? 0} min={-2} max={20} onChange={(v) => update(selected.id, { letterSpacing: v })} />
+                  <label className="flex items-center gap-3 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={!!selected.stroke}
+                      onChange={(e) => update(selected.id, { stroke: e.target.checked ? (isDark(selected.fill ?? "#000") ? "#FFFFFF" : "#0B1220") : undefined })}
+                      className="h-4 w-4 accent-[var(--accent)]"
+                    />
+                    Contour
+                    {selected.stroke && (
+                      <input type="color" aria-label="Couleur du contour" value={selected.stroke} onChange={(e) => update(selected.id, { stroke: e.target.value })} className="h-7 w-7 cursor-pointer rounded border-0 bg-transparent" />
+                    )}
+                  </label>
                 </div>
               )}
-              <div className="mt-3 flex gap-2">
-                <button onClick={centerSelected} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm">
-                  <Crosshair size={14} /> Centrer
-                </button>
+
+              <div className="mt-4">
+                <Slider
+                  label="Rotation"
+                  unit="°"
+                  value={Math.round(selected.rotation ?? 0)}
+                  min={-180}
+                  max={180}
+                  onChange={(v) => {
+                    const z = zoneById(selected.zoneId);
+                    update(selected.id, { rotation: v, ...clampToZone({ ...selected, rotation: v }, z) });
+                  }}
+                />
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <ToolButton label="Centrer" onClick={centerSelected} wide>
+                  <Crosshair size={14} aria-hidden="true" /> Centrer
+                </ToolButton>
+                <ToolButton label="Agrandir au maximum dans la zone" onClick={fitSelected} wide>
+                  <Maximize2 size={14} aria-hidden="true" /> Ajuster
+                </ToolButton>
+                <ToolButton label="Tourner de 90°" onClick={() => rotateSelected(90)} wide>
+                  <RotateCw size={14} aria-hidden="true" /> 90°
+                </ToolButton>
+                <ToolButton label="Dupliquer" onClick={duplicateSelected} wide>
+                  <Copy size={14} aria-hidden="true" /> Dupliquer
+                </ToolButton>
+                <ToolButton label="Mettre au premier plan" onClick={() => moveLayer(true)} wide>
+                  <ArrowUpToLine size={14} aria-hidden="true" /> Devant
+                </ToolButton>
+                <ToolButton label="Mettre à l'arrière-plan" onClick={() => moveLayer(false)} wide>
+                  <ArrowDownToLine size={14} aria-hidden="true" /> Derrière
+                </ToolButton>
                 <button
                   onClick={() => {
                     setElements((els) => els.filter((e) => e.id !== selected.id));
                     setSelectedId(null);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm text-red-700"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm text-red-700"
                 >
-                  <Trash2 size={14} /> Supprimer
+                  <Trash2 size={14} aria-hidden="true" /> Supprimer
                 </button>
               </div>
-              <p className="mt-3 text-xs text-ink-faint">Déplacez et redimensionnez l&apos;élément directement sur l&apos;aperçu.</p>
+              <p className="mt-3 text-xs text-ink-faint">
+                Sur l&apos;aperçu : glissez pour déplacer, tirez les coins pour redimensionner, la poignée du haut pour tourner.
+                L&apos;élément s&apos;aimante au centre de la zone.
+              </p>
             </div>
           )}
         </Panel>
@@ -634,20 +822,90 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
+function ToolButton({
+  label,
+  active,
+  wide,
+  onClick,
+  children,
+}: {
+  label: string;
+  active?: boolean;
+  wide?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={wide ? undefined : label}
+      title={label}
+      aria-pressed={active}
+      className={clsx(
+        "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border text-sm transition",
+        wide ? "px-3" : "w-9",
+        active ? "border-ink bg-ink text-white" : "border-line bg-surface hover:border-ink/30",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Slider({
+  label,
+  value,
+  min,
+  max,
+  unit = "",
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  unit?: string;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="flex justify-between text-xs text-ink-soft">
+        <span>{label}</span>
+        <span className="tabular-nums">
+          {value}
+          {unit}
+        </span>
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="mt-1.5 w-full accent-[var(--accent)]"
+      />
+    </label>
+  );
+}
+
+type Guides = { v: boolean; h: boolean };
+const SNAP = 4; // tolérance d'aimantation (repère 400)
+
 function ElementNode({
   el,
   zone,
   scale,
   onSelect,
   onChange,
-  clamp,
+  onGuides,
 }: {
   el: DesignElement;
   zone: MarkingZone;
   scale: number;
   onSelect: () => void;
   onChange: (p: Partial<DesignElement>) => void;
-  clamp: (el: Pick<DesignElement, "x" | "y" | "width" | "height">, z: MarkingZone) => { x: number; y: number };
+  onGuides: (g: Guides | null) => void;
 }) {
   const img = useHtmlImage(el.src);
   const textRef = useRef<Konva.Text>(null);
@@ -658,39 +916,66 @@ function ElementNode({
     const w = textRef.current.width();
     const h = textRef.current.height();
     if (Math.abs(w - el.width) > 0.5 || Math.abs(h - el.height) > 0.5) {
-      const fit = Math.min(1, zone.box.w / w, zone.box.h / h);
+      const { hw, hh } = rotatedHalfExtents(w, h, el.rotation);
+      const fit = Math.min(1, zone.box.w / (hw * 2), zone.box.h / (hh * 2));
       if (fit < 1) onChange({ fontSize: (el.fontSize ?? 20) * fit * 0.98 });
-      else onChange({ width: w, height: h, ...clamp({ ...el, width: w, height: h }, zone) });
+      else {
+        // On garde le centre en place quand la taille du texte change
+        const cx = el.x + el.width / 2;
+        const cy = el.y + el.height / 2;
+        onChange({ width: w, height: h, ...clampToZone({ x: cx - w / 2, y: cy - h / 2, width: w, height: h, rotation: el.rotation }, zone) });
+      }
     }
   });
 
+  const zcx = zone.box.x + zone.box.w / 2;
+  const zcy = zone.box.y + zone.box.h / 2;
+
+  // Le point d'ancrage Konva est le centre de l'élément (rotation autour du centre)
   const common = {
     id: el.id,
-    x: el.x,
-    y: el.y,
+    x: el.x + el.width / 2,
+    y: el.y + el.height / 2,
+    offsetX: el.width / 2,
+    offsetY: el.height / 2,
+    rotation: el.rotation ?? 0,
     draggable: true,
     onMouseDown: onSelect,
     onTap: onSelect,
     onDragStart: onSelect,
     dragBoundFunc(pos: { x: number; y: number }) {
-      // pos est en pixels écran : on convertit vers le repère 400
-      const c = clamp({ x: pos.x / scale, y: pos.y / scale, width: el.width, height: el.height }, zone);
-      return { x: c.x * scale, y: c.y * scale };
+      // pos = centre, en pixels écran → repère 400
+      let cx = pos.x / scale;
+      let cy = pos.y / scale;
+      const c = clampToZone({ x: cx - el.width / 2, y: cy - el.height / 2, width: el.width, height: el.height, rotation: el.rotation }, zone);
+      cx = c.x + el.width / 2;
+      cy = c.y + el.height / 2;
+      // Aimantation au centre de la zone
+      const v = Math.abs(cx - zcx) < SNAP;
+      const h = Math.abs(cy - zcy) < SNAP;
+      if (v) cx = zcx;
+      if (h) cy = zcy;
+      onGuides({ v, h });
+      return { x: cx * scale, y: cy * scale };
     },
     onDragEnd(e: Konva.KonvaEventObject<DragEvent>) {
-      onChange({ x: e.target.x(), y: e.target.y() });
+      onGuides(null);
+      onChange({ x: e.target.x() - el.width / 2, y: e.target.y() - el.height / 2 });
     },
     onTransformEnd(e: Konva.KonvaEventObject<Event>) {
       const node = e.target;
-      const sx = node.scaleX();
+      const sx = Math.abs(node.scaleX());
+      const rotation = Math.round(node.rotation() * 10) / 10;
       node.scaleX(1);
       node.scaleY(1);
+      const cx = node.x();
+      const cy = node.y();
       if (el.type === "image") {
         const width = el.width * sx;
         const height = el.height * sx;
-        onChange({ width, height, ...clamp({ x: node.x(), y: node.y(), width, height }, zone) });
+        onChange({ width, height, rotation, ...clampToZone({ x: cx - width / 2, y: cy - height / 2, width, height, rotation }, zone) });
       } else {
-        onChange({ x: node.x(), y: node.y(), fontSize: (el.fontSize ?? 20) * sx });
+        onChange({ rotation, fontSize: (el.fontSize ?? 20) * sx });
       }
     },
   };
@@ -698,6 +983,7 @@ function ElementNode({
   if (el.type === "image") {
     return img ? <KImage {...common} image={img} width={el.width} height={el.height} /> : null;
   }
+  const style = [el.italic ? "italic" : "", el.bold === false ? "normal" : "bold"].filter(Boolean).join(" ");
   return (
     <KText
       {...common}
@@ -705,8 +991,12 @@ function ElementNode({
       text={el.text}
       fontSize={el.fontSize}
       fontFamily={el.fontFamily}
-      fontStyle="bold"
+      fontStyle={style}
+      letterSpacing={el.letterSpacing ?? 0}
       fill={el.fill}
+      stroke={el.stroke}
+      strokeWidth={el.stroke ? Math.max(0.6, (el.fontSize ?? 20) * 0.06) : 0}
+      fillAfterStrokeEnabled
     />
   );
 }

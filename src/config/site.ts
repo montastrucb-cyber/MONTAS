@@ -24,8 +24,8 @@ export function siteUrl() {
 
 export const nav = [
   { href: "/produits", label: "Produits" },
+  { href: "/produits?categorie=bureau-entreprise", label: "Bureau & entreprise" },
   { href: "/produits?categorie=kits-bienvenue", label: "Kits de bienvenue" },
-  { href: "/#fonctionnement", label: "Fonctionnement" },
   { href: "/#professionnels", label: "Professionnels" },
   { href: "/devis", label: "Devis" },
 ];

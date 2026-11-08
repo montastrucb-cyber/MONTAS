@@ -7,7 +7,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/produits/${product.slug}`}
-      className="group flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_24px_50px_-28px_rgba(13,115,82,0.55)]"
+      className="group flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_24px_50px_-28px_rgba(15,118,110,0.45)]"
     >
       <div className="relative aspect-square bg-muted">
         <ProductVisual
@@ -17,7 +17,7 @@ export function ProductCard({ product }: { product: Product }) {
           className="h-full w-full p-6 transition duration-500 group-hover:scale-[1.03]"
         />
         {product.includes && (
-          <span className="absolute left-4 top-4 rounded-full bg-night px-2.5 py-1 font-mono text-xs text-lime">Pack</span>
+          <span className="absolute left-4 top-4 rounded-full bg-night px-2.5 py-1 font-mono text-xs text-glow">Pack</span>
         )}
         <div className="absolute bottom-4 left-4 flex gap-1.5">
           {product.colors.slice(0, 5).map((c) => (
@@ -28,13 +28,13 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="flex flex-1 flex-col p-5">
         <h3 className="font-medium tracking-tight">{product.name}</h3>
         <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{product.short}</p>
-        <div className="mt-auto flex items-end justify-between pt-5 text-sm">
+        <div className="mt-auto flex items-end justify-between gap-3 pt-5 text-sm">
           <p>
             <span className="text-ink-faint">dès </span>
             <span className="font-semibold">{eur(fromPrice(product))}</span>
             <span className="text-ink-faint"> HT / pièce</span>
           </p>
-          <p className="text-ink-faint">min. {product.moq} pcs</p>
+          <p className="shrink-0 whitespace-nowrap text-ink-faint">min. {product.moq} pcs</p>
         </div>
       </div>
     </Link>

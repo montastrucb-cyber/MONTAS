@@ -22,12 +22,38 @@ export type DesignElement = {
   mime?: string;
   naturalWidth?: number;
   naturalHeight?: number;
+  /** Rotation en degrés, autour du centre de l'élément */
+  rotation?: number;
   // texte
   text?: string;
   fontSize?: number;
   fontFamily?: string;
   fill?: string;
+  bold?: boolean;
+  italic?: boolean;
+  letterSpacing?: number;
+  /** Contour du texte (couleur) ; absent = pas de contour */
+  stroke?: string;
 };
+
+/** Demi-largeur / demi-hauteur de la boîte englobante d'un élément tourné */
+export function rotatedHalfExtents(w: number, h: number, rotationDeg = 0) {
+  const t = (rotationDeg * Math.PI) / 180;
+  const c = Math.abs(Math.cos(t));
+  const s = Math.abs(Math.sin(t));
+  return { hw: (w * c + h * s) / 2, hh: (w * s + h * c) / 2 };
+}
+
+/** Position (coin haut-gauche non tourné) gardant l'élément tourné entièrement dans la zone */
+export function clampToZone(el: { x: number; y: number; width: number; height: number; rotation?: number }, zone: MarkingZone) {
+  const { hw, hh } = rotatedHalfExtents(el.width, el.height, el.rotation);
+  const z = zone.box;
+  const fit = (c: number, half: number, start: number, len: number) =>
+    half * 2 >= len ? start + len / 2 : Math.min(Math.max(c, start + half), start + len - half);
+  const cx = fit(el.x + el.width / 2, hw, z.x, z.w);
+  const cy = fit(el.y + el.height / 2, hh, z.y, z.h);
+  return { x: cx - el.width / 2, y: cy - el.height / 2 };
+}
 
 export type DesignProject = {
   productSlug: string;

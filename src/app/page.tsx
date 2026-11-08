@@ -16,11 +16,13 @@ import { categories, getProduct, products } from "@/data/catalog";
 import { ProductVisual } from "@/components/ProductVisual";
 import { ProductCard } from "@/components/ProductCard";
 import { HeroDemo } from "@/components/HeroDemo";
+import { Showcase3D } from "@/components/three/Showcase3D";
 import { Reveal, Stagger, StaggerItem } from "@/components/Motion";
 import { ButtonLink, Container, Eyebrow, Glow, H2 } from "@/components/ui";
 import { eur } from "@/lib/pricing";
 
 const categoryVisual: Record<string, { slug: string; color: string }> = {
+  "bureau-entreprise": { slug: "tasse-isotherme", color: "#1E2A44" },
   "kits-bienvenue": { slug: "kit-bienvenue-essentiel", color: "#D9C3A0" },
   "clubs-associations": { slug: "gourde-inox", color: "#1F2A44" },
   "textile-evenementiel": { slug: "t-shirt-coton-bio", color: "#A8BBA2" },
@@ -44,13 +46,13 @@ export default function Home() {
       <section className="px-2 pt-2 sm:px-4">
         <div className="on-dark relative overflow-hidden rounded-[2rem] bg-night text-white sm:rounded-[2.75rem]">
           <div aria-hidden="true" className="tech-grid absolute inset-0" />
-          <div aria-hidden="true" className="absolute -right-32 -top-40 h-[560px] w-[560px] rounded-full bg-lime/15 blur-[120px]" />
-          <div aria-hidden="true" className="absolute -bottom-40 -left-24 h-[480px] w-[480px] rounded-full bg-cyan-400/10 blur-[120px]" />
+          <div aria-hidden="true" className="absolute -right-32 -top-40 h-[560px] w-[560px] rounded-full bg-glow/15 blur-[120px]" />
+          <div aria-hidden="true" className="absolute -bottom-40 -left-24 h-[480px] w-[480px] rounded-full bg-indigo-400/15 blur-[120px]" />
 
           <Container className="relative grid items-center gap-14 pb-16 pt-14 sm:pb-24 sm:pt-20 lg:grid-cols-[1.05fr_1fr]">
             <div>
               <p className="rise glass inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-white/80">
-                  <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime" />
+                  <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-glow" />
                   Entreprises · Associations · Clubs · Écoles
               </p>
               <h1 className="mt-7 text-[2.7rem] font-semibold leading-[1.02] tracking-[-0.045em] text-balance sm:text-[4.2rem]">
@@ -72,9 +74,9 @@ export default function Home() {
                 </Link>
               </div>
               <ul className="rise rise-4 mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/70">
-                  <li className="flex items-center gap-2"><ShieldCheck size={16} className="text-lime" aria-hidden="true" /> Paiement sécurisé</li>
-                  <li className="flex items-center gap-2"><FileText size={16} className="text-lime" aria-hidden="true" /> Prix HT affichés</li>
-                  <li className="flex items-center gap-2"><MousePointer2 size={16} className="text-lime" aria-hidden="true" /> Aperçu en direct</li>
+                  <li className="flex items-center gap-2"><ShieldCheck size={16} className="text-glow" aria-hidden="true" /> Paiement sécurisé</li>
+                  <li className="flex items-center gap-2"><FileText size={16} className="text-glow" aria-hidden="true" /> Prix HT affichés</li>
+                  <li className="flex items-center gap-2"><MousePointer2 size={16} className="text-glow" aria-hidden="true" /> Aperçu en direct</li>
               </ul>
             </div>
             <div className="rise rise-2">
@@ -91,14 +93,14 @@ export default function Home() {
             <div>
               <Eyebrow>Catalogue</Eyebrow>
               <H2 className="mt-3">
-                <span id="titre-categories">Trois univers, un même <Glow>circuit simple</Glow>.</span>
+                <span id="titre-categories">Quatre univers, un même <Glow>circuit simple</Glow>.</span>
               </H2>
             </div>
             <Link href="/produits" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent hover:underline">
               Tout le catalogue <ArrowRight size={15} aria-hidden="true" />
             </Link>
           </Reveal>
-          <Stagger className="mt-10 grid gap-5 md:grid-cols-3">
+          <Stagger className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {categories.map((c) => {
               const v = categoryVisual[c.slug];
               const p = getProduct(v.slug)!;
@@ -106,13 +108,13 @@ export default function Home() {
                 <StaggerItem key={c.slug}>
                   <Link
                     href={`/produits?categorie=${c.slug}`}
-                    className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface p-6 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_24px_50px_-28px_rgba(13,115,82,0.55)]"
+                    className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface p-6 transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_24px_50px_-28px_rgba(15,118,110,0.45)]"
                   >
                     <p className="font-mono text-xs text-ink-faint">{c.audience}</p>
                     <h3 className="mt-2 text-xl font-semibold tracking-tight">{c.name}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-ink-soft">{c.short}</p>
                     <div className="relative mt-6 aspect-[4/3] overflow-hidden rounded-2xl bg-muted">
-                      <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(198,242,78,0.35),transparent_60%)] opacity-0 transition duration-500 group-hover:opacity-100" />
+                      <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(94,234,212,0.35),transparent_60%)] opacity-0 transition duration-500 group-hover:opacity-100" />
                       <ProductVisual kind={p.kind} color={v.color} label={p.name} className="relative h-full w-full p-4 transition duration-500 group-hover:scale-[1.05]" />
                     </div>
                     <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium">
@@ -140,7 +142,7 @@ export default function Home() {
             {steps.map((s, i) => (
               <StaggerItem key={s.title} className="relative rounded-3xl border border-line bg-surface p-6">
                 <div className="flex items-center justify-between">
-                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-night text-lime shadow-[0_0_24px_-6px_rgba(198,242,78,0.7)]">
+                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-night text-glow shadow-[0_0_24px_-6px_rgba(94,234,212,0.7)]">
                     <s.icon size={20} aria-hidden="true" />
                   </span>
                   <span className="font-mono text-sm text-ink-faint">0{i + 1}</span>
@@ -150,6 +152,25 @@ export default function Home() {
               </StaggerItem>
             ))}
           </Stagger>
+        </Container>
+      </section>
+
+      {/* ——— Aperçu 3D ——— */}
+      <section className="py-20 sm:py-24" aria-labelledby="titre-3d">
+        <Container>
+          <Reveal>
+            <Eyebrow>Aperçu 3D</Eyebrow>
+            <H2 className="mt-3 max-w-2xl">
+              <span id="titre-3d">Voyez votre logo <Glow>sous tous les angles</Glow> avant de commander.</span>
+            </H2>
+            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-soft">
+              Le marquage s&apos;enroule autour du mug, suit l&apos;axe du stylo, se pose sur la couverture du carnet. Vous
+              savez exactement ce que recevront vos équipes et vos clients.
+            </p>
+          </Reveal>
+          <div className="mt-10">
+            <Showcase3D />
+          </div>
         </Container>
       </section>
 
@@ -190,7 +211,7 @@ export default function Home() {
                 <StaggerItem key={t.min} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
                   <span className="font-display text-sm font-semibold tabular-nums">{eur(t.unitPrice)}</span>
                   <div
-                    className="w-full rounded-t-xl bg-gradient-to-t from-accent to-lime shadow-[0_0_30px_-8px_rgba(198,242,78,0.6)]"
+                    className="w-full rounded-t-xl bg-gradient-to-t from-accent to-glow shadow-[0_0_30px_-8px_rgba(94,234,212,0.6)]"
                     style={{ height: `${(t.unitPrice / maxTier) * 160}px` }}
                   />
                   <span className="font-mono text-xs text-white/70">{t.min}+</span>
@@ -260,7 +281,7 @@ export default function Home() {
       <section className="px-2 py-12 sm:px-4" aria-labelledby="titre-devis">
         <Reveal className="on-dark relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] bg-night px-6 py-16 text-center text-white sm:px-12 sm:py-20">
           <div aria-hidden="true" className="tech-grid absolute inset-0" />
-          <div aria-hidden="true" className="absolute left-1/2 top-0 h-72 w-[600px] -translate-x-1/2 rounded-full bg-lime/20 blur-[100px]" />
+          <div aria-hidden="true" className="absolute left-1/2 top-0 h-72 w-[600px] -translate-x-1/2 rounded-full bg-glow/20 blur-[100px]" />
           <H2 className="relative mx-auto max-w-2xl">
             <span id="titre-devis">Une grosse commande ou un <Glow onDark>projet sur mesure</Glow> ?</span>
           </H2>

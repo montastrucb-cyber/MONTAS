@@ -16,7 +16,17 @@ Cette version est l'**étape « design du site »**. Toutes les pages sont en pl
 | Devis | `/devis` | Formulaire validé (navigateur + serveur), anti-spam, envoi par email si Resend est configuré |
 | Juridique | `/mentions-legales`, `/cgv`, `/cgu`, `/confidentialite` (aussi `/rgpd`) | **Modèles à faire valider par un professionnel** |
 
-Design : base claire + sections sombres « tech » (grille lumineuse, effets de verre), polices Space Grotesk et DM Sans, animations avec **Motion** (ex-Framer Motion), qui respectent le réglage « réduire les animations » de l'appareil. Direction choisie avec le module **UI/UX Pro Max** (`.claude/skills/ui-ux-pro-max`).
+Design : palette bleu nuit, ardoise et sarcelle ; base claire + sections sombres « tech » (grille lumineuse, effets de verre), polices Space Grotesk et DM Sans, animations avec **Motion** (ex-Framer Motion), qui respectent le réglage « réduire les animations » de l'appareil. Direction choisie avec le module **UI/UX Pro Max** (`.claude/skills/ui-ux-pro-max`).
+
+## Aperçu 3D et personnalisation avancée
+
+- **3D en temps réel** (Three.js / React Three Fiber, gratuit) pour : mug, tasse isotherme, gourde, carnet, stylo, tapis de souris, clé USB, batterie externe, tote bag, sac à dos et packs. Les produits sont modélisés dans le code (`src/components/three/Product3D.tsx`), sans fichier 3D à télécharger ; le marquage est appliqué sur la vraie surface (enroulé autour du mug, le long du stylo…).
+- Le textile (t-shirt, sweat, casquette) reste en 2D : pour le passer en 3D, il faudra des modèles 3D professionnels (fichiers `.glb`), à acheter ou faire réaliser.
+- Configurateur : rotation (crantée tous les 45°), aimantation au centre avec guides, premier plan / arrière-plan, dupliquer, ajuster à la zone, police, gras, italique, taille, espacement des lettres, couleur et contour du texte.
+
+## Gammes
+
+Bureau et entreprise · Kits de bienvenue salariés · Clubs et associations · Textile et événementiel (17 produits de démonstration dans `src/data/catalog.ts`).
 
 ## Checklist avant lancement (vérifiée)
 

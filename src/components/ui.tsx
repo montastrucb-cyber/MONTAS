@@ -21,9 +21,9 @@ export function H2({ children, className }: { children: React.ReactNode; classNa
 /** Mot mis en valeur en dégradé. `onDark` pour les sections sombres. */
 export function Glow({ children, onDark }: { children: React.ReactNode; onDark?: boolean }) {
   return onDark ? (
-    <span className="text-glow">{children}</span>
+    <span className="text-gradient">{children}</span>
   ) : (
-    <span className="bg-gradient-to-r from-accent to-cyan-700 bg-clip-text text-transparent">{children}</span>
+    <span className="bg-gradient-to-r from-accent to-sky-700 bg-clip-text text-transparent">{children}</span>
   );
 }
 
@@ -42,7 +42,7 @@ export function ButtonLink({ href, children, variant = "primary", className }: B
         "inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-sm font-medium transition duration-200 active:scale-[0.98]",
         variant === "primary" && "bg-ink text-white hover:bg-ink/85",
         variant === "secondary" && "border border-ink/15 bg-surface text-ink hover:border-ink/40",
-        variant === "light" && "btn-glow bg-lime text-ink hover:brightness-105",
+        variant === "light" && "btn-glow bg-glow text-ink hover:brightness-105",
         variant === "ghost-dark" && "text-white/80 hover:text-white",
         className,
       )}

@@ -4,18 +4,23 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { Check, MousePointer2 } from "lucide-react";
+import { Box, Check, Image as ImageIcon, MousePointer2 } from "lucide-react";
 import type { Product, View } from "@/data/catalog";
 import { computeQuote, eur, fromPrice } from "@/lib/pricing";
 import { useCart } from "@/lib/cart";
 import { ProductVisual, isDark } from "./ProductVisual";
 import { QtyStepper, QuoteBreakdown, TierTable } from "./PriceSummary";
+import { Viewer3D } from "./three/Viewer3D";
+import { supports3D } from "./three/support";
+import { makeSampleArt } from "./three/sampleArt";
 
 export function ProductConfigurator({ product }: { product: Product }) {
   const router = useRouter();
   const { add } = useCart();
   const [color, setColor] = useState(product.colors[0]);
   const [view, setView] = useState<View>("front");
+  const can3D = supports3D(product.kind);
+  const [show3D, setShow3D] = useState(false);
   const [techniqueId, setTechniqueId] = useState(product.techniques[0]?.id);
   const [zoneIds, setZoneIds] = useState<string[]>([product.zones[0].id]);
   const [sizes, setSizes] = useState<Record<string, number>>(() =>
@@ -74,7 +79,30 @@ export function ProductConfigurator({ product }: { product: Product }) {
             showZone={shownZones[0]?.box}
             label={`${product.name}, coloris ${color.name}, vue ${view === "front" ? "de face" : "de dos"}`}
           />
-          {views.length > 1 && (
+          {show3D && (
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#edf1f5_70%)]">
+              <Sample3D product={product} colorHex={color.hex} colorName={color.name} />
+            </div>
+          )}
+          {can3D && (
+            <div className="absolute right-3 top-3 flex rounded-full border border-line bg-surface p-1 text-sm shadow-sm" role="group" aria-label="Type d'aperçu">
+              <button
+                onClick={() => setShow3D(false)}
+                aria-pressed={!show3D}
+                className={clsx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 transition", !show3D ? "bg-ink text-white" : "text-ink-soft")}
+              >
+                <ImageIcon size={14} aria-hidden="true" /> Illustration
+              </button>
+              <button
+                onClick={() => setShow3D(true)}
+                aria-pressed={show3D}
+                className={clsx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 transition", show3D ? "bg-ink text-white" : "text-ink-soft")}
+              >
+                <Box size={14} aria-hidden="true" /> 3D
+              </button>
+            </div>
+          )}
+          {views.length > 1 && !show3D && (
             <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 rounded-full border border-line bg-surface p-1 text-sm">
               {views.map((v) => (
                 <button
@@ -88,7 +116,9 @@ export function ProductConfigurator({ product }: { product: Product }) {
             </div>
           )}
         </div>
-        <p className="mt-3 text-center text-xs text-ink-faint">Illustration non contractuelle · pointillés : zone de marquage</p>
+        <p className="mt-3 text-center text-xs text-ink-faint">
+          {show3D ? "Aperçu 3D avec un logo d'exemple · faites glisser pour tourner" : "Illustration non contractuelle · pointillés : zone de marquage"}
+        </p>
       </div>
 
       {/* Options */}
@@ -229,5 +259,21 @@ function Section({ title, aside, children }: { title: string; aside?: string; ch
       </div>
       {children}
     </div>
+  );
+}
+
+function Sample3D({ product, colorHex, colorName }: { product: Product; colorHex: string; colorName: string }) {
+  const ink = isDark(colorHex) ? "#FFFFFF" : "#0B1220";
+  const slug = product.slug;
+  const art = useMemo(() => (typeof document === "undefined" ? null : makeSampleArt(product.zones[0], ink)), [slug, ink]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <Viewer3D
+      kind={product.kind}
+      color={colorHex}
+      zone={product.zones[0]}
+      art={art}
+      label={`${product.name} en 3D, coloris ${colorName}, avec un logo d'exemple`}
+      className="absolute inset-0"
+    />
   );
 }

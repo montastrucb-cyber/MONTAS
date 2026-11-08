@@ -6,18 +6,19 @@
   Space Grotesk (titres) + DM Sans (texte), contraste texte ≥ 4,5:1.
 */
 :root {
-  --background: #f6f7f4;
+  /* Palette harmonieuse : bleu nuit + ardoise + accent sarcelle (UI/UX Pro Max « B2B ») */
+  --background: #f6f8fa;
   --surface: #ffffff;
-  --muted: #eceee9;
-  --ink: #0a0c10;
-  --ink-soft: #4b515c; /* 7,6:1 sur le fond */
-  --ink-faint: #5f6570; /* 5,6:1 sur le fond */
-  --line: #dfe2dc;
-  --accent: #0d7352; /* 5,9:1 sur blanc */
-  --accent-soft: #e2f3ec;
-  --lime: #c6f24e;
-  --night: #07090c;
-  --night-2: #0f1218;
+  --muted: #edf1f5;
+  --ink: #0b1220; /* bleu nuit */
+  --ink-soft: #475569; /* ardoise, 7,2:1 sur le fond */
+  --ink-faint: #5b6678; /* 5,6:1 sur le fond */
+  --line: #e2e8f0;
+  --accent: #0f766e; /* sarcelle, 5,5:1 sur blanc */
+  --accent-soft: #e3f4f1;
+  --glow: #5eead4; /* turquoise lumineux, réservé aux fonds sombres */
+  --night: #0b1220;
+  --night-2: #111a2e;
 }
 
 @theme inline {
@@ -30,7 +31,7 @@
   --color-line: var(--line);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
-  --color-lime: var(--lime);
+  --color-glow: var(--glow);
   --color-night: var(--night);
   --color-night-2: var(--night-2);
   --font-sans: var(--font-body);
@@ -68,12 +69,12 @@
     border-radius: 6px;
   }
   .on-dark :focus-visible {
-    outline-color: var(--lime);
+    outline-color: var(--glow);
   }
 }
 
 ::selection {
-  background: var(--lime);
+  background: var(--glow);
   color: var(--ink);
 }
 
@@ -86,8 +87,8 @@
   mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 75%);
 }
 
-.text-glow {
-  background: linear-gradient(100deg, #c6f24e 0%, #6ee7b7 45%, #67e8f9 100%);
+.text-gradient {
+  background: linear-gradient(100deg, #5eead4 0%, #7dd3fc 50%, #a5b4fc 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -101,7 +102,7 @@
 }
 
 .glass-light {
-  background: rgba(246, 247, 244, 0.88);
+  background: rgba(246, 248, 250, 0.95);
   border: 1px solid rgba(10, 12, 16, 0.08);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -109,8 +110,8 @@
 
 .btn-glow {
   box-shadow:
-    0 0 0 1px rgba(198, 242, 78, 0.5),
-    0 10px 40px -8px rgba(198, 242, 78, 0.55);
+    0 0 0 1px rgba(94,234,212, 0.5),
+    0 10px 40px -8px rgba(94,234,212, 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,7 +1,7 @@
 // ⚠️ DONNÉES DE DÉMONSTRATION — prix, délais et quantités fictifs.
 // Plus tard, ces données viendront de l'admin (Payload CMS + Postgres).
 
-export type CategorySlug = "kits-bienvenue" | "clubs-associations" | "textile-evenementiel";
+export type CategorySlug = "bureau-entreprise" | "kits-bienvenue" | "clubs-associations" | "textile-evenementiel";
 
 export type Category = {
   slug: CategorySlug;
@@ -11,6 +11,12 @@ export type Category = {
 };
 
 export const categories: Category[] = [
+  {
+    slug: "bureau-entreprise",
+    name: "Bureau et entreprise",
+    short: "Objets du quotidien au bureau, accueil, séminaires et cadeaux clients à votre image.",
+    audience: "Entreprises, cabinets, collectivités",
+  },
   {
     slug: "kits-bienvenue",
     name: "Kits de bienvenue salariés",
@@ -32,7 +38,22 @@ export const categories: Category[] = [
 ];
 
 /** Forme du visuel produit (dessin SVG maison, voir ProductVisual). */
-export type VisualKind = "tshirt" | "sweat" | "tote" | "mug" | "gourde" | "casquette" | "carnet" | "pack";
+export type VisualKind =
+  | "tshirt"
+  | "sweat"
+  | "tote"
+  | "mug"
+  | "gourde"
+  | "casquette"
+  | "carnet"
+  | "pack"
+  | "stylo"
+  | "tapis"
+  | "usb"
+  | "powerbank"
+  | "lanyard"
+  | "sac"
+  | "tasse-iso";
 
 export type View = "front" | "back";
 
@@ -177,7 +198,7 @@ export const products: Product[] = [
   {
     slug: "mug-ceramique",
     name: "Mug céramique",
-    category: "kits-bienvenue",
+    category: "bureau-entreprise",
     kind: "mug",
     short: "33 cl, compatible lave-vaisselle.",
     description: "Le mug du quotidien au bureau. Céramique blanche ou colorée, marquage quadri résistant au lave-vaisselle.",
@@ -249,7 +270,7 @@ export const products: Product[] = [
   {
     slug: "carnet-a5",
     name: "Carnet A5",
-    category: "kits-bienvenue",
+    category: "bureau-entreprise",
     kind: "carnet",
     short: "Couverture rigide, 96 pages lignées, élastique.",
     description: "Un carnet élégant pour vos équipes et vos clients. Couverture rigide soft-touch, marquage à chaud ou quadri.",
@@ -318,6 +339,204 @@ export const products: Product[] = [
     ],
     customizable: true,
     includes: ["T-shirt coton bio", "Casquette brodée", "Gourde inox 50 cl"],
+  },
+  {
+    slug: "stylo-metal",
+    name: "Stylo métal gravé",
+    category: "bureau-entreprise",
+    kind: "stylo",
+    short: "Corps aluminium, encre bleue, gravure laser du logo.",
+    description:
+      "Le stylo qu'on garde : corps en aluminium anodisé, mécanisme rotatif, recharge standard. Votre logo est gravé au laser, il ne s'efface pas.",
+    colors: [
+      { name: "Bleu nuit", hex: "#1E2A44" },
+      { name: "Noir", hex: "#1B1C1F" },
+      { name: "Argent", hex: "#C9CDD2" },
+      { name: "Sarcelle", hex: "#0F766E" },
+    ],
+    moq: 100,
+    leadTime: [7, 10],
+    techniques: [gravure, tampo],
+    zones: [{ id: "corps", view: "front", label: "Corps du stylo", widthMm: 45, heightMm: 7, box: { x: 150, y: 191, w: 120, h: 18 } }],
+    tiers: [
+      { min: 100, unitPrice: 2.4 },
+      { min: 250, unitPrice: 1.9 },
+      { min: 500, unitPrice: 1.55 },
+      { min: 1000, unitPrice: 1.25 },
+    ],
+    customizable: true,
+  },
+  {
+    slug: "tasse-isotherme",
+    name: "Tasse isotherme",
+    category: "bureau-entreprise",
+    kind: "tasse-iso",
+    short: "35 cl, double paroi inox, couvercle anti-fuite.",
+    description:
+      "La tasse de bureau qui garde le café chaud pendant la réunion. Double paroi inox, couvercle coulissant, passe sous la plupart des machines.",
+    colors: [
+      { name: "Bleu nuit", hex: "#1E2A44" },
+      { name: "Blanc", hex: "#F2F3F1" },
+      { name: "Ardoise", hex: "#475569" },
+      { name: "Sauge", hex: "#A8BBA2" },
+    ],
+    moq: 25,
+    leadTime: [8, 12],
+    techniques: [gravure, tampo],
+    zones: [{ id: "face", view: "front", label: "Face", widthMm: 60, heightMm: 95, box: { x: 170, y: 175, w: 60, h: 100 } }],
+    tiers: [
+      { min: 25, unitPrice: 13.9 },
+      { min: 100, unitPrice: 10.9 },
+      { min: 500, unitPrice: 8.7 },
+    ],
+    customizable: true,
+  },
+  {
+    slug: "tapis-souris",
+    name: "Tapis de souris",
+    category: "bureau-entreprise",
+    kind: "tapis",
+    short: "24 × 20 cm, surface textile, base antidérapante.",
+    description:
+      "Un grand visuel toujours sous les yeux de vos équipes. Impression couleur sur toute la surface, bords cousus, base caoutchouc antidérapante.",
+    colors: [
+      { name: "Noir", hex: "#1B1C1F" },
+      { name: "Bleu nuit", hex: "#1E2A44" },
+      { name: "Gris clair", hex: "#E5E7EB" },
+    ],
+    moq: 50,
+    leadTime: [7, 10],
+    techniques: [{ id: "sublimation", label: "Impression intégrale (sublimation)", setupFee: 30, unitCost: 0.8 }],
+    zones: [{ id: "surface", view: "front", label: "Surface", widthMm: 220, heightMm: 175, box: { x: 85, y: 125, w: 230, h: 180 } }],
+    tiers: [
+      { min: 50, unitPrice: 5.9 },
+      { min: 100, unitPrice: 4.6 },
+      { min: 500, unitPrice: 3.4 },
+    ],
+    customizable: true,
+  },
+  {
+    slug: "cle-usb",
+    name: "Clé USB 32 Go",
+    category: "bureau-entreprise",
+    kind: "usb",
+    short: "USB-C et USB-A, coque aluminium, données préchargeables.",
+    description:
+      "Pratique pour vos présentations commerciales et vos kits presse. Double connecteur USB-C / USB-A, coque aluminium, chargement de vos fichiers possible sur devis.",
+    colors: [
+      { name: "Argent", hex: "#C9CDD2" },
+      { name: "Bleu nuit", hex: "#1E2A44" },
+      { name: "Noir", hex: "#1B1C1F" },
+    ],
+    moq: 50,
+    leadTime: [10, 14],
+    techniques: [gravure, tampo],
+    zones: [{ id: "face", view: "front", label: "Face", widthMm: 15, heightMm: 30, box: { x: 172, y: 160, w: 56, h: 110 } }],
+    tiers: [
+      { min: 50, unitPrice: 9.9 },
+      { min: 100, unitPrice: 8.2 },
+      { min: 500, unitPrice: 6.9 },
+    ],
+    customizable: true,
+  },
+  {
+    slug: "batterie-externe",
+    name: "Batterie externe 10 000 mAh",
+    category: "bureau-entreprise",
+    kind: "powerbank",
+    short: "Recharge rapide USB-C, format fin, certifiée CE.",
+    description:
+      "Le cadeau client utile en déplacement. Format fin, recharge rapide USB-C, indicateur de charge. Livrée dans une boîte individuelle.",
+    colors: [
+      { name: "Bleu nuit", hex: "#1E2A44" },
+      { name: "Blanc", hex: "#F2F3F1" },
+      { name: "Noir", hex: "#1B1C1F" },
+    ],
+    moq: 25,
+    leadTime: [10, 14],
+    techniques: [tampo, gravure],
+    zones: [{ id: "face", view: "front", label: "Face", widthMm: 50, heightMm: 78, box: { x: 158, y: 140, w: 84, h: 130 } }],
+    tiers: [
+      { min: 25, unitPrice: 17.9 },
+      { min: 100, unitPrice: 14.5 },
+      { min: 500, unitPrice: 12.2 },
+    ],
+    customizable: true,
+  },
+  {
+    slug: "tour-de-cou",
+    name: "Tour de cou porte-badge",
+    category: "bureau-entreprise",
+    kind: "lanyard",
+    short: "Sangle 20 mm, mousqueton, attache de sécurité.",
+    description:
+      "Pour vos salons, séminaires et badges d'accès. Sangle polyester imprimée sur toute la longueur, mousqueton métal et attache de sécurité au cou.",
+    colors: [
+      { name: "Bleu nuit", hex: "#1E2A44" },
+      { name: "Sarcelle", hex: "#0F766E" },
+      { name: "Noir", hex: "#1B1C1F" },
+      { name: "Blanc", hex: "#F2F3F1" },
+    ],
+    moq: 100,
+    leadTime: [10, 14],
+    techniques: [{ id: "sublimation", label: "Impression sur la sangle (sublimation)", setupFee: 40, unitCost: 0.5 }],
+    zones: [{ id: "sangle", view: "front", label: "Sangle", widthMm: 20, heightMm: 115, box: { x: 137, y: 70, w: 26, h: 150 } }],
+    tiers: [
+      { min: 100, unitPrice: 1.9 },
+      { min: 500, unitPrice: 1.2 },
+      { min: 1000, unitPrice: 0.95 },
+    ],
+    customizable: true,
+  },
+  {
+    slug: "sac-ordinateur",
+    name: "Sac à dos ordinateur",
+    category: "bureau-entreprise",
+    kind: "sac",
+    short: "Compartiment 15,6 pouces rembourré, tissu déperlant.",
+    description:
+      "Un sac sobre et solide pour vos équipes nomades. Compartiment ordinateur rembourré, poche avant organisée, dos respirant. Logo brodé ou imprimé.",
+    colors: [
+      { name: "Bleu nuit", hex: "#1E2A44" },
+      { name: "Noir", hex: "#1B1C1F" },
+      { name: "Ardoise", hex: "#475569" },
+    ],
+    moq: 20,
+    leadTime: [12, 18],
+    techniques: [broderie, dtf],
+    zones: [{ id: "face", view: "front", label: "Face avant", widthMm: 120, heightMm: 85, box: { x: 150, y: 130, w: 100, h: 70 } }],
+    tiers: [
+      { min: 20, unitPrice: 34 },
+      { min: 50, unitPrice: 29 },
+      { min: 100, unitPrice: 25.5 },
+      { min: 250, unitPrice: 22.9 },
+    ],
+    customizable: true,
+  },
+  {
+    slug: "kit-teletravail",
+    name: "Kit Télétravail",
+    category: "kits-bienvenue",
+    kind: "pack",
+    short: "Tasse isotherme, carnet, stylo, tapis de souris et batterie externe.",
+    description:
+      "Tout le bureau à la maison, aux couleurs de votre entreprise. Chaque article est marqué de votre logo et l'ensemble est livré assemblé, prêt à envoyer à vos salariés.",
+    colors: [
+      { name: "Bleu nuit", hex: "#1E2A44" },
+      { name: "Kraft", hex: "#D9C3A0" },
+    ],
+    moq: 20,
+    leadTime: [12, 18],
+    techniques: [{ id: "multi", label: "Marquage logo sur chaque article", setupFee: 150, unitCost: 5.5 }],
+    zones: [{ id: "boite", view: "front", label: "Couvercle de la boîte", widthMm: 150, heightMm: 100, box: { x: 125, y: 200, w: 150, h: 100 } }],
+    tiers: [
+      { min: 20, unitPrice: 59 },
+      { min: 50, unitPrice: 52 },
+      { min: 100, unitPrice: 46 },
+      { min: 250, unitPrice: 41 },
+    ],
+    customizable: true,
+    includes: ["Tasse isotherme 35 cl", "Carnet A5", "Stylo métal gravé", "Tapis de souris", "Batterie externe 10 000 mAh", "Boîte personnalisée"],
   },
 ];
 

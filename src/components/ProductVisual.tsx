@@ -172,5 +172,83 @@ function Shape({
           <path d="M200 118 L200 166" stroke={line} strokeWidth="2" />
         </g>
       );
+    case "stylo":
+      return (
+        <g>
+          <path d="M70 200 L96 187 L96 213 Z" fill="#B8BCC2" />
+          <path d="M62 200 L72 196 L72 204 Z" fill="#3A3D44" />
+          <rect x="96" y="187" width="222" height="26" rx="6" fill={color} {...common} />
+          <rect x="96" y="187" width="222" height="26" rx="6" fill={grad} />
+          <rect x="284" y="186" width="16" height="28" fill="#D7DADF" />
+          <rect x="300" y="183" width="44" height="34" rx="8" fill={color} {...common} />
+          <rect x="300" y="183" width="44" height="34" rx="8" fill={shade} />
+          <path d="M306 183 L306 166 Q306 160 312 160 L350 160" fill="none" stroke="#C9CDD2" strokeWidth="5" strokeLinecap="round" />
+          <rect x="100" y="190" width="214" height="4" rx="2" fill="#fff" opacity="0.18" />
+        </g>
+      );
+    case "tapis":
+      return (
+        <g>
+          <rect x="70" y="116" width="260" height="200" rx="18" fill="rgba(0,0,0,0.12)" transform="translate(4 6)" />
+          <rect x="70" y="110" width="260" height="210" rx="18" fill={color} {...common} />
+          <rect x="70" y="110" width="260" height="210" rx="18" fill={grad} />
+          <rect x="76" y="116" width="248" height="198" rx="14" fill="none" stroke={line} strokeWidth="2" strokeDasharray="3 4" />
+        </g>
+      );
+    case "usb":
+      return (
+        <g>
+          <rect x="178" y="78" width="44" height="50" rx="4" fill="#D7DADF" stroke="rgba(0,0,0,0.12)" strokeWidth="2" />
+          <rect x="188" y="90" width="8" height="8" fill="#9CA3AF" />
+          <rect x="204" y="90" width="8" height="8" fill="#9CA3AF" />
+          <rect x="160" y="120" width="80" height="185" rx="16" fill={color} {...common} />
+          <rect x="160" y="120" width="80" height="185" rx="16" fill={grad} />
+          <circle cx="200" cy="288" r="7" fill="none" stroke={line} strokeWidth="3" />
+        </g>
+      );
+    case "powerbank":
+      return (
+        <g>
+          <rect x="140" y="80" width="120" height="250" rx="22" fill={color} {...common} />
+          <rect x="140" y="80" width="120" height="250" rx="22" fill={grad} />
+          <rect x="180" y="300" width="40" height="8" rx="4" fill={shade} />
+          {[0, 1, 2, 3].map((i) => (
+            <circle key={i} cx={176 + i * 16} cy="110" r="3.5" fill={i < 3 ? "#5EEAD4" : line} />
+          ))}
+        </g>
+      );
+    case "lanyard":
+      return (
+        <g>
+          <path d="M150 40 L150 250 Q150 290 200 300 Q250 290 250 250 L250 40" fill="none" stroke={color} strokeWidth="26" strokeLinejoin="round" />
+          <path d="M150 40 L150 250 Q150 290 200 300 Q250 290 250 250 L250 40" fill="none" stroke={shade} strokeWidth="26" strokeLinejoin="round" opacity="0.6" />
+          <path d="M150 40 L150 250 Q150 290 200 300 Q250 290 250 250 L250 40" fill="none" stroke={line} strokeWidth="1.5" strokeDasharray="4 5" />
+          <rect x="190" y="296" width="20" height="22" rx="4" fill="#C9CDD2" />
+          <path d="M200 318 Q186 330 200 346 Q214 330 200 318" fill="none" stroke="#A3A8B0" strokeWidth="5" />
+          <rect x="160" y="344" width="80" height="22" rx="4" fill="rgba(255,255,255,0.7)" stroke="rgba(0,0,0,0.12)" strokeWidth="2" />
+        </g>
+      );
+    case "sac":
+      return (
+        <g>
+          <path d="M170 92 Q170 60 200 60 Q230 60 230 92" fill="none" stroke={color} strokeWidth="12" />
+          <path d="M120 120 Q120 90 150 90 L250 90 Q280 90 280 120 L284 330 Q284 348 266 348 L134 348 Q116 348 116 330 Z" fill={color} {...common} />
+          <path d="M120 120 Q120 90 150 90 L250 90 Q280 90 280 120 L284 330 Q284 348 266 348 L134 348 Q116 348 116 330 Z" fill={grad} />
+          <rect x="138" y="225" width="124" height="100" rx="16" fill={color} {...common} />
+          <rect x="138" y="225" width="124" height="100" rx="16" fill={shade} />
+          <path d="M146 236 L254 236" stroke={line} strokeWidth="3" />
+          <rect x="190" y="240" width="20" height="8" rx="3" fill="#C9CDD2" />
+        </g>
+      );
+    case "tasse-iso":
+      return (
+        <g>
+          <rect x="150" y="96" width="100" height="30" rx="10" fill="#26272B" />
+          <rect x="182" y="100" width="36" height="8" rx="4" fill="#4B5563" />
+          <path d="M155 124 L245 124 L238 340 Q238 352 226 352 L174 352 Q162 352 162 340 Z" fill={color} {...common} />
+          <path d="M155 124 L245 124 L238 340 Q238 352 226 352 L174 352 Q162 352 162 340 Z" fill={grad} />
+          <rect x="166" y="150" width="7" height="180" rx="3.5" fill="#fff" opacity="0.16" />
+        </g>
+      );
   }
 }
