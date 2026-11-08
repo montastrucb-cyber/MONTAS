@@ -28,6 +28,9 @@ const categoryVisual: Record<string, { slug: string; color: string }> = {
   "textile-evenementiel": { slug: "t-shirt-coton-bio", color: "#A8BBA2" },
 };
 
+/** Accroche découpée en mots pour une apparition en cascade (le texte reste lu en entier). */
+const headline = ["Vos", "goodies", "à", "vos", "couleurs,", "en gros,", "sans", "prise", "de", "tête."];
+
 const steps = [
   { icon: Layers, title: "Choisissez", text: "Un produit ou un pack, la couleur, les tailles et la quantité." },
   { icon: Upload, title: "Personnalisez", text: "Importez votre logo, ajoutez du texte et placez-le dans la zone de marquage." },
@@ -56,14 +59,27 @@ export default function Home() {
                   Entreprises · Associations · Clubs · Écoles
               </p>
               <h1 className="mt-7 text-[2.7rem] font-semibold leading-[1.02] tracking-[-0.045em] text-balance sm:text-[4.2rem]">
-                  Vos goodies à vos couleurs, <Glow onDark>en gros</Glow>, sans prise de tête.
+                {headline.map((w, i) => (
+                  <span key={i}>
+                    {i > 0 && " "}
+                    <span className="word-in" style={{ "--i": i } as React.CSSProperties}>
+                      {w === "en gros," ? (
+                        <>
+                          <Glow onDark>en gros</Glow>,
+                        </>
+                      ) : (
+                        w
+                      )}
+                    </span>
+                  </span>
+                ))}
               </h1>
               <p className="rise rise-2 mt-6 max-w-xl text-lg leading-relaxed text-white/75 text-pretty">
                   Importez votre logo, voyez le résultat en direct et le prix baisser avec la quantité. Payez en ligne ou
                   demandez un devis.
               </p>
               <div className="rise rise-3 mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-                <ButtonLink href="/personnaliser" variant="light" className="w-full sm:w-auto">
+                <ButtonLink href="/personnaliser" variant="light" className="btn-shine w-full sm:w-auto">
                   <MousePointer2 size={16} aria-hidden="true" /> Personnaliser mon produit
                 </ButtonLink>
                 <Link
@@ -245,8 +261,12 @@ export default function Home() {
       {/* ——— Professionnels ——— */}
       <section id="professionnels" className="scroll-mt-20 py-20 sm:py-24" aria-labelledby="titre-pros">
         <Container>
-          <div className="grid gap-10 rounded-[2.5rem] border border-line bg-surface p-6 sm:p-12 lg:grid-cols-[1fr_1.2fr]">
-            <Reveal>
+          <div className="relative grid gap-10 overflow-hidden rounded-[2.5rem] border border-line bg-surface p-6 sm:p-12 lg:grid-cols-[1fr_1.2fr]">
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+              <span className="aurora-blob aurora-a" />
+              <span className="aurora-blob aurora-b" />
+            </div>
+            <Reveal className="relative">
               <Eyebrow>Pour les professionnels</Eyebrow>
               <H2 className="mt-3">
                 <span id="titre-pros">Un espace entreprise pensé pour <Glow>recommander</Glow> sans effort.</span>
@@ -259,7 +279,7 @@ export default function Home() {
                 Espace client : bientôt disponible
               </p>
             </Reveal>
-            <Stagger className="grid gap-4 sm:grid-cols-2">
+            <Stagger className="relative grid gap-4 sm:grid-cols-2">
               {[
                 { icon: Repeat, t: "Réassort en 2 clics", d: "Recommandez le même produit personnalisé, changez juste la quantité ou la taille." },
                 { icon: Package, t: "Logos enregistrés", d: "Vos fichiers sont conservés pour vos prochaines commandes." },
