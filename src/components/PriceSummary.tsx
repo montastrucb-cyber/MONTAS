@@ -2,29 +2,81 @@ import type { Product } from "@/data/catalog";
 import { eur, tierFor, type Quote } from "@/lib/pricing";
 import clsx from "clsx";
 
-export function TierTable({ product, qty }: { product: Product; qty: number }) {
+/** Cases de paliers de prix : un clic choisit la quantité du palier. */
+export function TierTable({ product, qty, onPick }: { product: Product; qty: number; onPick?: (qty: number) => void }) {
   const { current, next } = tierFor(product, qty);
   return (
     <div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {product.tiers.map((t) => (
-          <div
-            key={t.min}
-            className={clsx(
-              "rounded-xl border px-3 py-2.5 text-center transition",
-              t === current && qty >= product.moq ? "border-accent bg-accent-soft" : "border-line bg-surface",
-            )}
-          >
-            <p className="text-xs text-ink-soft">{t.min}+ pcs</p>
-            <p className="font-semibold">{eur(t.unitPrice)}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label="Choisir un palier de quantité">
+        {product.tiers.map((t) => {
+          const active = t === current && qty >= product.moq;
+          return (
+            <button
+              key={t.min}
+              type="button"
+              disabled={!onPick}
+              aria-pressed={active}
+              onClick={() => onPick?.(Math.max(t.min, product.moq))}
+              className={clsx(
+                "min-h-14 rounded-xl border px-3 py-2.5 text-center transition duration-200 disabled:cursor-default",
+                active ? "border-accent bg-accent-soft ring-1 ring-accent" : "border-line bg-surface hover:border-accent/50 hover:bg-accent-soft/40",
+              )}
+            >
+              <span className="block text-xs text-ink-soft">{t.min}+ pcs</span>
+              <span className="block font-semibold">{eur(t.unitPrice)}</span>
+            </button>
+          );
+        })}
       </div>
       {next && qty > 0 && (
         <p className="mt-2 text-xs text-accent">
           Encore {next.min - qty} pièce{next.min - qty > 1 ? "s" : ""} pour passer à {eur(next.unitPrice)} HT / pièce.
+          {onPick && (
+            <>
+              {" "}
+              <button type="button" onClick={() => onPick(next.min)} className="font-medium underline underline-offset-2">
+                Passer à {next.min}
+              </button>
+            </>
+          )}
         </p>
       )}
+    </div>
+  );
+}
+
+/** Champ quantité avec boutons − et +. */
+export function QtyStepper({ value, onChange, min = 0, step = 5 }: { value: number; onChange: (n: number) => void; min?: number; step?: number }) {
+  const set = (n: number) => onChange(Math.max(min, Math.min(100000, Math.round(n))));
+  return (
+    <div className="inline-flex items-center rounded-xl border border-line bg-surface">
+      <button
+        type="button"
+        aria-label={`Retirer ${step} pièces`}
+        onClick={() => set(value - step)}
+        disabled={value <= min}
+        className="grid h-11 w-11 place-items-center rounded-l-xl text-lg hover:bg-muted disabled:opacity-30"
+      >
+        −
+      </button>
+      <input
+        type="number"
+        inputMode="numeric"
+        aria-label="Quantité"
+        min={min}
+        value={value || ""}
+        onChange={(e) => onChange(Math.max(0, parseInt(e.target.value) || 0))}
+        onBlur={() => value < min && set(min)}
+        className="h-11 w-20 border-x border-line bg-transparent text-center font-medium outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+      />
+      <button
+        type="button"
+        aria-label={`Ajouter ${step} pièces`}
+        onClick={() => set(value + step)}
+        className="grid h-11 w-11 place-items-center rounded-r-xl text-lg hover:bg-muted"
+      >
+        +
+      </button>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import type { Product, View } from "@/data/catalog";
 import { computeQuote, eur, fromPrice } from "@/lib/pricing";
 import { useCart } from "@/lib/cart";
 import { ProductVisual, isDark } from "./ProductVisual";
-import { QuoteBreakdown, TierTable } from "./PriceSummary";
+import { QtyStepper, QuoteBreakdown, TierTable } from "./PriceSummary";
 
 export function ProductConfigurator({ product }: { product: Product }) {
   const router = useRouter();
@@ -24,6 +24,23 @@ export function ProductConfigurator({ product }: { product: Product }) {
   const [simpleQty, setSimpleQty] = useState(product.moq);
 
   const qty = product.sizes ? Object.values(sizes).reduce((a, b) => a + (b || 0), 0) : simpleQty;
+
+  /** Change la quantité totale. Pour le textile, on garde la répartition des tailles. */
+  function setTotal(n: number) {
+    if (!product.sizes) return setSimpleQty(n);
+    const entries = Object.entries(sizes).filter(([, v]) => v > 0);
+    const current = entries.reduce((a, [, v]) => a + v, 0);
+    if (current === 0) return setSizes({ M: n });
+    const next: Record<string, number> = {};
+    let used = 0;
+    for (const [s, v] of entries) {
+      next[s] = Math.floor((v / current) * n);
+      used += next[s];
+    }
+    const biggest = entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+    next[biggest] += n - used;
+    setSizes(next);
+  }
   const technique = product.techniques.find((t) => t.id === techniqueId);
   const quote = useMemo(() => computeQuote(product, qty, technique, zoneIds.length), [product, qty, technique, zoneIds.length]);
   const belowMoq = qty < product.moq;
@@ -114,6 +131,7 @@ export function ProductConfigurator({ product }: { product: Product }) {
                     type="number"
                     min={0}
                     inputMode="numeric"
+                    aria-label={`Quantité en taille ${s}`}
                     value={sizes[s] ?? 0}
                     onChange={(e) => setSizes((x) => ({ ...x, [s]: Math.max(0, parseInt(e.target.value) || 0) }))}
                     className="w-full bg-transparent text-center font-medium outline-none"
@@ -122,19 +140,11 @@ export function ProductConfigurator({ product }: { product: Product }) {
               ))}
             </div>
           ) : (
-            <input
-              type="number"
-              aria-label="Quantité"
-              inputMode="numeric"
-              min={product.moq}
-              step={1}
-              value={simpleQty}
-              onChange={(e) => setSimpleQty(Math.max(0, parseInt(e.target.value) || 0))}
-              className="w-40 rounded-xl border border-line bg-surface px-4 py-2.5 font-medium outline-none focus:border-ink"
-            />
+            <QtyStepper value={simpleQty} onChange={setSimpleQty} min={product.moq} />
           )}
           <div className="mt-4">
-            <TierTable product={product} qty={qty} />
+            <TierTable product={product} qty={qty} onPick={setTotal} />
+            {product.sizes && <p className="mt-2 text-xs text-ink-faint">Un clic sur un palier ajuste le total en gardant votre répartition des tailles.</p>}
           </div>
         </Section>
 

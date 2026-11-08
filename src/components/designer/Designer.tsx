@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { products, type MarkingZone, type Product, type View } from "@/data/catalog";
 import { ProductVisual, isDark } from "@/components/ProductVisual";
-import { QuoteBreakdown, TierTable } from "@/components/PriceSummary";
+import { QtyStepper, QuoteBreakdown, TierTable } from "@/components/PriceSummary";
 import { computeQuote } from "@/lib/pricing";
 import { useCart } from "@/lib/cart";
 import {
@@ -576,15 +576,7 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
 
         <Panel title="4. Quantité et prix">
           <div className="flex flex-wrap items-center gap-3">
-            <input
-              type="number"
-              aria-label="Quantité"
-              inputMode="numeric"
-              min={product.moq}
-              value={qty}
-              onChange={(e) => setQty(Math.max(0, parseInt(e.target.value) || 0))}
-              className="w-32 rounded-xl border border-line bg-surface px-4 py-2.5 font-medium outline-none focus:border-ink"
-            />
+            <QtyStepper value={qty} onChange={setQty} min={product.moq} />
             <select
               aria-label="Technique de marquage"
               value={techniqueId}
@@ -599,7 +591,7 @@ export default function Designer({ initialSlug, initialColor }: { initialSlug?: 
             </select>
           </div>
           <div className="mt-4">
-            <TierTable product={product} qty={qty} />
+            <TierTable product={product} qty={qty} onPick={setQty} />
           </div>
           <div className="mt-4">
             <QuoteBreakdown quote={quote} belowMoq={qty < product.moq} moq={product.moq} />
